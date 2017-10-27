@@ -1,0 +1,32 @@
+\documentclass{article}
+
+\usepackage{geometry}
+\geometry{verbose,tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\setlength{\parskip}{\smallskipamount}
+\setlength{\parindent}{0pt}
+\usepackage{amsthm}
+\usepackage{amsmath}
+
+\begin{document}
+
+\title{Lab 4 - Cloud detection - Stat 215A, Fall 2017}
+
+\author{Olivia Angiuli, Miyabi Ishihara, Yizhou Zhao}
+
+\maketitle
+
+\section{Introduction}
+
+<<setup, echo = FALSE, message=FALSE, warning=FALSE, fig.height = 5, fig.width = 5, fig.align='center', fig.pos='h', fig.cap="Histogram of the correlation similarity measure for different values of k">>=
+
+library(tidyverse)
+library(gridExtra)
+
+
+@
+
+\section{References}
+
+\end{document}
