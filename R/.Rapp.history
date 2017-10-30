@@ -1,0 +1,28 @@
+plotRawImage <- function(image_df){#
+  # Plots the raw images, given the AN-camera angle.#
+  ##
+  # Arguments: image_df, the dataframe with the image data#
+  # Returns: ggplot object with image#
+  return(ggplot(image_df) + geom_point(aes(x = x, y = y, color = AN)))#
+}#
+#
+plotClasses <- function(image_df) {#
+  # Plots the expert classifications for a given image.#
+  # Arguments:#
+  #   image_df: the dataframe with the image data#
+  # Returns:#
+  #   ggplot object with image#
+  # Create plot object#
+  gg_image <- ggplot(image1) +#
+              geom_point(aes(x = x, y = y, color = factor(label)),#
+                         alpha=0.1) +#
+              scale_color_discrete(name = "Expert label")#
+  return(gg_image)#
+}
+plotRawImage <- function(image_df){#
+  # Plots the raw images, given the AN-camera angle.#
+  ##
+  # Arguments: image_df, the dataframe with the image data#
+  # Returns: ggplot object with image#
+  return(ggplot(image_df) + geom_point(aes(x = x, y = y, color = AN)))#
+}

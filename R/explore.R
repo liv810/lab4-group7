@@ -57,7 +57,7 @@ plot_conditional_densities <- function(image_df, dimension) {
   # Returns:
   #   ggplot object with image showing conditional densities
   
-  gg_image <- ggplot(image1, aes(group = factor(label),
+  gg_image <- ggplot(image_df, aes(group = factor(label),
                                  fill = factor(label))) + 
   geom_density(aes_string(x = dimension), alpha = 0.5) +
   scale_fill_discrete(name = "Expert label",

@@ -115,8 +115,8 @@ Of the three pictures, NDAI has by far the most discriminatory power between the
 
 grid_arrange_shared_legend(plot_conditional_densities(image1, "NDAI") +
     ggtitle("Image 1 NDAI"),
-    plot_conditional_densities(image2, "CORR") + ggtitle("Image 1 CORR"),
-    plot_conditional_densities(image3, "SD") + ggtitle("Image 1 SD"),
+    plot_conditional_densities(image1, "CORR") + ggtitle("Image 1 CORR"),
+    plot_conditional_densities(image1, "SD") + ggtitle("Image 1 SD"),
     ncol=3, nrow=1, position="right")
 @
 
