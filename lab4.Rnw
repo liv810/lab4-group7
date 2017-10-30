@@ -24,9 +24,123 @@
 library(tidyverse)
 library(gridExtra)
 
+source("R/explore.R")
+
+# Get the data for three images
+path <- "data"
+image1 <- read.table(paste0('data/', 'image1.txt'), header = F)
+image2 <- read.table(paste0('data/', 'image2.txt'), header = F)
+image3 <- read.table(paste0('data/', 'image3.txt'), header = F)
+
+# Add informative column names.
+collabs <- c('y','x','label','NDAI','SD','CORR','DF','CF','BF','AF','AN')
+names(image1) <- collabs
+names(image2) <- collabs
+names(image3) <- collabs
+@
+
+\section{Exploratory Data Anaysis}
+
+\subsection{Data visualization}
+
+The following plots visualize the three provided images.  The first set of images shows the raw data from the perspective of the AN-camera.  The second set of images shows the same three images, classified by whether an expert determined that a given area was ice (pink), unknown (green), or cloudy (blue).
+
+<<plot-raw-labelled-data, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Raw image data from AN-camera.">>=
+
+# Raw images
+grid_arrange_shared_legend(plotRawImage(image1, "AN") +
+    ggtitle("Raw satellite data of snow/ice,from AN-camera"),
+    plotRawImage(image2, "AN") + ggtitle(""),
+    plotRawImage(image3, "AN") + ggtitle(""),
+    ncol=3, nrow=1, position="right")
 
 @
 
+<<plot-expert-classified-data, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Expert classification for whether a given pixel is ice, cloud, or unknown.">>=
+
+# Plot the labelled images
+grid_arrange_shared_legend(plotClasses(image1) +
+                             ggtitle("Expert-labelled satellite data of snow/ice"),
+                           plotClasses(image2) + ggtitle(""),
+                           plotClasses(image3) + ggtitle(""),
+                           ncol=3, nrow=1, position="right")
+@
+
+\subsection{Data visualization}
+
+\subsubsection{Do different angles provide different information?}
+
+Below is a plot that shows the raw satellite data for image 1 from all 5 different angles that we are provided in the data set: from left to right, 70.5$^{\circ}$ (DF), 60.0$^{\circ}$ (CF), 45.6$^{\circ}$ (BF), 26.1$^{\circ}$ (AF) in the forward directions,  and 0$^{\circ}$ (AN).
+
+Visually, it is apparent that there are differerent degrees of resolution in the bottom left corner, which corresponds to mostly cloudy and/or unknown regions (as referenced from Figure 2), when the Image 1 photo is taken from different angles.  Besides from that, though, the rest of the image appears to be fairly constant.
+
+<<plot-images-by-angle, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Image 1, by increasingly acute angles.">>=
+
+grid_arrange_shared_legend(plotRawImage(image1, "DF") +
+    ggtitle("Image 1, taken from increasingly acute angles"),
+    plotRawImage(image1, "CF") + no_axis + ggtitle(""),
+    plotRawImage(image1, "BF") + no_axis + ggtitle(""),
+    plotRawImage(image1, "AF") + no_axis + ggtitle(""),
+    plotRawImage(image1, "AN") + no_axis + ggtitle(""),
+    ncol=5, nrow=1, position="right")
+@
+
+However, plotting the conditional densities of cloud vs. ice vs. unknown regions reveals that different angles do indeed provide different quantitative understandings of whether a certain region is ice versus not ice.  Most notably, although the ``ice" labels always seem to peak at a resolution of about 275, the distribution of resolutions at which clouds appear becomes increasingly more bimodal as the measurement angle becomes closer to 0.  Note that this exact trend won't always hold: the amount of extra information gained from different angles will vary based on cloud placement, which will change from image to image.
+
+<<plot-densities-by-angle, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Conditional densities of ice vs. cloud vs. unknown by different angles. Cloud resolutions become increasingly bimodal as measurement angle decreases.">>=
+
+grid_arrange_shared_legend(plot_conditional_densities(image1, "DF") +
+    ggtitle("Image 1 conditional densities, by measurement angles") +
+    no_axis + xlab("DF"),
+    plot_conditional_densities(image1, "CF") + no_axis + ggtitle(""),
+    plot_conditional_densities(image1, "BF") + no_axis + ggtitle(""),
+    plot_conditional_densities(image1, "AF") + no_axis + ggtitle(""),
+    plot_conditional_densities(image1, "AN") + no_axis + ggtitle(""),
+    ncol=5, nrow=1, position="right")
+
+@
+
+\subsubsection{Radiances based on features}
+
+The three features available to us are:
+\begin{itemize}
+\item NDAI (normalized difference angular index), which characterizes the changes in a scene with changes in the MISR view direction
+\item CORR (the correlation of MISR images from different viewing directions)
+\item SD (the standard deviation of the AN-camera pixel values in a scene)
+\end{itemize}
+
+Of the three pictures, NDAI has by far the most discriminatory power between the presence of ice and the absence of ice (either cloudy or unknown).  This can be seen by the distinct peaks in the leftmost graph below.
+
+<<plot-features-for-image-1, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Conditional densities of ice vs. cloud vs. unknown by different angles. Cloud resolutions become increasingly bimodal as measurement angle decreases.">>=
+
+grid_arrange_shared_legend(plot_conditional_densities(image1, "NDAI") +
+    ggtitle("Image 1 NDAI"),
+    plot_conditional_densities(image2, "CORR") + ggtitle("Image 1 CORR"),
+    plot_conditional_densities(image3, "SD") + ggtitle("Image 1 SD"),
+    ncol=3, nrow=1, position="right")
+@
+
+The discriminatory power of NDAI can also be seen from the following side-by-side plot of NDAI resolution values versus the true classes of image 1.  Note that higher values of NDAI tend to correspond to ``no ice" regions.
+
+<<plot-ndai-values, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="High NDAI values tend to correspond to unknown or cloudy regions; low NDAI values tend to correspond to icy regions.">>=
+
+grid.arrange(plotRawImage(image1, "NDAI") + ggtitle("Image 1 NDAI"),
+    plotClasses(image1) + ggtitle("True classes"), ncol=2, nrow=1)
+
+@
+
+\section{Modelling aproaches}
+
+\subsection{Approach 1}
+
+\subsection{Approach 2}
+
+\subsection{Approach 3}
+
+
+
 \section{References}
+
+(1)  Shi, Tao, et al. "Daytime arctic cloud detection based on multi-angle satellite data with case studies." Journal of the American Statistical Association 103.482 (2008): 584-593.
 
 \end{document}
