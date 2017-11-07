@@ -10,6 +10,7 @@
 \setlength{\parindent}{0pt}
 \usepackage{amsthm}
 \usepackage{amsmath}
+\usepackage{url}
 
 \begin{document}
 
@@ -63,7 +64,7 @@ We are provided with three images, each of which provide the following informati
 \end{figure}
 
 As will be described in the next section, differences in radiance measurements of the same image from different angles can tell us about the presence or absence of clouds and/or ice.
-\item \textbf{Feature values. } Yu et. al. developed three features that capture spatial information that helps distinguish between ice and clouds:
+\item \textbf{Feature values. } Shi et. al. developed three features that capture spatial information that helps distinguish between ice and clouds:
 \begin{itemize}
 \item \textbf{CORR - }\emph{an average linear correlation of radiation measurements at different view angles}.\\
 A cloud may obstruct the view of underlying ice from some angles but not others.  Figure 1, above, illustrates a scenario in which DF provides an unobstructed view of the underlying image that the other angles cannot provide.\\
@@ -103,7 +104,7 @@ grid_arrange_shared_legend(plotClasses(image1) +
 
 Yes!  Below, we show image 1 from all 5 different angles that we are provided in the data set: from left to right, 70.5$^{\circ}$ (DF), 60.0$^{\circ}$ (CF), 45.6$^{\circ}$ (BF), 26.1$^{\circ}$ (AF) in the forward directions,  and 0$^{\circ}$ (AN).
 
-One can spot higher resolution in the bottom left corner (which corresponds to mostly cloudy and/or unknown regions) as the angles becoming increasingly acute.  This supports the reasoning for Yu et. al.'s construction of the ``CORR" and ``NDAI" features: cloudy regions might have more variation in radiances between different angles.
+One can spot higher resolution in the bottom left corner (which corresponds to mostly cloudy and/or unknown regions) as the angles becoming increasingly acute.  This supports the reasoning for Shi et. al.'s construction of the ``CORR" and ``NDAI" features: cloudy regions might have more variation in radiances between different angles.
 
 <<plot-images-by-angle, cached=TRUE, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Image 1, by increasingly acute angles.">>=
 
@@ -116,7 +117,7 @@ grid_arrange_shared_legend(plotRawImage(image1, "DF") +
     ncol=5, nrow=1, position="right")
 @
 
-Plotting the conditional densities of cloud- versus ice-covered regions confirms that different angles do indeed help differentiate between cloud and ice.  We notice two trends in particular.  First, icy regions tend to occur at a resolution of around 275.  This can effectively set a high ``prior" for iciness for pixels with a similar resolution.  Second, we notice that cloudy regions have a much wider range of resolutions that change with the angle of measurement.  Again, this confirms Yu et. al.'s intuition that differences between measurements from different angles often correspond to cloudiness.
+Plotting the conditional densities of cloud- versus ice-covered regions confirms that different angles do indeed help differentiate between cloud and ice.  We notice two trends in particular.  First, icy regions tend to occur at a resolution of around 275.  This can effectively set a high ``prior" for iciness for pixels with a similar resolution.  Second, we notice that cloudy regions have a much wider range of resolutions that change with the angle of measurement.  Again, this confirms Shi et. al.'s intuition that differences between measurements from different angles often correspond to cloudiness.
 
 <<plot-densities-by-angle, cached=TRUE, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Conditional densities of ice vs. cloud vs. unknown by different angles. Cloud resolutions become increasingly bimodal as measurement angle decreases.">>=
 
@@ -162,7 +163,7 @@ grid.arrange(plotRawImage(image1, "NDAI") + ggtitle("Image 1 NDAI"),
 
 \newpage
 
-Yu et. al. also discuss how NDAI and CORR, together, provide even more information than the two features alone: they hypothesize that high CORR + low NDAI images would more strongly suggest ice than high CORR alone.  This relationship, though, is not readily seen in the following pairwise feature plots, largely because there are few high CORR pixels that correspond to ice-covered regions.
+Shi et. al. also discuss how NDAI and CORR, together, provide even more information than the two features alone: they hypothesize that high CORR + low NDAI images would more strongly suggest ice than high CORR alone.  This relationship, though, is not readily seen in the following pairwise feature plots, largely because there are few high CORR pixels that correspond to ice-covered regions.
 
 <<ndai-vs-corr, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="High NDAI values tend to correspond to unknown or cloudy regions; low NDAI values tend to correspond to icy regions.">>=
 
@@ -177,21 +178,94 @@ grid_arrange_shared_legend(
 
 \section{Classifying ice- versus snow-covered surfaces}
 
-\subsection{Baseline approach: random forests}
+The classification approach of Shi et. al. hinges upon an enhanced linear correlation matching (ELCM) algorithm.  However, we noted that this approach depended on having data images available from multiple orbits and/or consecutive MISR blocks.  Since we do not have access to this full data set, reproducing this ELCM approach is not possible.
 
-<<fit-random-forest, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 1.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="High NDAI values tend to correspond to unknown or cloudy regions; low NDAI values tend to correspond to icy regions.">>=
+For that reason, we instead resort to more classic classification methods: QDA/LDA, logistic regression, and random forests.  First, we train baseline versions of these methods.   We note that random forests produces the best AUC values of the three baseline models, so we proceed to do additional parameter tuning and analysis for that model.
+
+We decided before training these methods on a few approaches:
+
+\begin{itemize}
+\item \textbf{Three-fold cross validation. } Since labels of adjacent pixels in an image are not truly independent, we decided to perform three-fold cross validation: that is, we would train three different versions of each model, each time setting aside an entire image for testing purposes.\\
+This is much preferred over randomly sampling points, since regions of ice and cloud often span many adjacent pixels, meaning that training on one of these pixels would enhance the test performance of the pixels nearby to it.
+\item \textbf{Training only on positive- and negative- expert labels. } We do not train our model on data points whose expert classification was a 0 (unknown): we would only like our model to learn classification based on points whose true value is known.
+\end{itemize}
+
+\subsection{LDA/QDA}
+
+\subsection{Logistic regression}
 
 
+\subsection{Random forests}
+
+Random forests are an ensemble learning method that combine the prediction of multiple component decision trees in order to make a probabilistic determination of the class of an input.
+
+Random forests are ``random" in a few different steps:
+\begin{itemize}
+\item Tree bagging. Each component tree randomly selects, via bootstrapping, a training subset from the total training set.
+\item Feature bagging. At each candidate split of a component tree, a random subset of the features are used.
+\end{itemize}
+
+This is illustrated visually in the below picture.
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[width=0.5\textwidth]{extra/rf_explanation.jpg}
+\end{center}
+\caption{Graphical introduction to random forests [2].}
+\end{figure}
+
+In our case, we fit random forest with 100 trees three times (using the three-fold cross validation approach described above).  The resulting ROC-curve is shown below, and reveals very strong performance, shown by the model's ability to achieve a high true positive rate with quite a low corresponding false negative rate.
+
+<<fit-random-forest, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="ROC curve for random forest three-fold cross-validation.">>=
+
+source("R/random_forest.R")
+
+# generated predictions for each of the three-fold CV data sets
+prediction3 = trainAndEvaluateRF(train_data_12, image3_filtered, 100)
+prediction2 = trainAndEvaluateRF(train_data_13, image2_filtered, 100)
+prediction1 = trainAndEvaluateRF(train_data_23, image1_filtered, 100)
+
+# calculate false positive and true positive rates into dataframe
+fpr_tpr_rates_df <- data.frame(
+  rbind(calculateROCValues(prediction3, 3),
+      calculateROCValues(prediction2, 2),
+      calculateROCValues(prediction1, 1)))
+colnames(fpr_tpr_rates_df) <- c("fpr", "tpr", "image_num")
+
+# plot results
+ggplot(fpr_tpr_rates_df) +
+  geom_line(aes(x=fpr, y=tpr, color=factor(image_num))) +
+  labs(x = "False positive rate",
+    y = "True positive rate",
+    title = "Random Forest ROC curve: Leave-one-out CV") +
+  scale_color_discrete(name = "Predictions on Image #",
+                      labels = c("3 (AUC=0.885)",
+                                 "2 (AUC=0.965)",
+                                 "1 (AUC=0.956)")) +
+  # clean up plot a little bit
+  theme_bw() +
+  # make the title and axes labels smaller
+  theme(panel.border = element_blank(),
+        legend.position = "right",
+        legend.title = element_text(size=9),
+        legend.text = element_text(size=9),
+        plot.title = element_text(size=9),
+        axis.title.x = element_text(size = 9),
+        axis.title.y = element_text(size = 9))
 @
 
-\subsection{Enhanced linear correlation matching}
+\subsubsection{Parameter tuning}
 
-\subsection{Enhanced linear correlation matching + QDA}
+\subsubsection{Systematic misclassification errors}
+
+\subsubsection{Generalizability of the model}
 
 
+\section{Concluding thoughts}
 
 \section{References}
 
 (1)  Shi, Tao, et al. "Daytime arctic cloud detection based on multi-angle satellite data with case studies." Journal of the American Statistical Association 103.482 (2008): 584-593.
+(2) Random Forest Interactive Discussion with Example. \url{https://www.youtube.com/watch?v=ajTc5y3OqSQ}
 
 \end{document}
