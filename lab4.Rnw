@@ -191,7 +191,6 @@ This is much preferred over randomly sampling points, since regions of ice and c
 \end{itemize}
 
 \subsection{LDA/QDA}
-\subsection{LDA/QDA}
 
 <<fit-lda-qda, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="ROC curve for LDA/QDA three-fold cross-validation.">>=
 
