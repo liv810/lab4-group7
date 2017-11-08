@@ -191,6 +191,96 @@ This is much preferred over randomly sampling points, since regions of ice and c
 \end{itemize}
 
 \subsection{LDA/QDA}
+\subsection{LDA/QDA}
+
+<<fit-lda-qda, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="ROC curve for LDA/QDA three-fold cross-validation.">>=
+
+source("R/lda-qda.R")
+source("R/explore.R")
+
+path <- "data"
+image1 <- read.table(paste0('data/', 'image1.txt'), header = F)
+image2 <- read.table(paste0('data/', 'image2.txt'), header = F)
+image3 <- read.table(paste0('data/', 'image3.txt'), header = F)
+
+# Add informative column names.
+collabs <- c('y','x','label','NDAI','SD','CORR','DF','CF','BF','AF','AN')
+names(image1) <- collabs
+names(image2) <- collabs
+names(image3) <- collabs
+
+training.image <- list(image1,image2,image3)
+
+lda.cv <- KFoldCV(training.image, method="lda")
+qda.cv <- KFoldCV(training.image, method="qda")
+
+lda.roc.info <- ggplot(lda.cv$roc) +
+  geom_line(aes(x=FPR,y=TPR, group=fold, color=fold)) +
+  scale_colour_discrete(name  ="Image Left Out") +
+  ggtitle("LDA")
+
+qda.roc.info <- ggplot(qda.cv$roc) +
+  geom_line(aes(x=FPR,y=TPR, group=fold, color=fold)) +
+  scale_colour_discrete(name  ="Image Left Out") +
+  ggtitle("QDA")
+
+grid_arrange_shared_legend(lda.roc.info,qda.roc.info,ncol =2 ,nrow = 1, position = "right")
+@
+Quadradic discriminant analysis(LDA) for classification aims to separate the feature space using lines(hyperplanes in higher dimenstion). It assumes that  each class $i$ has a Gaussian distribution with mean $\mu_i$ and covariance matrix $\Sigma_i$, that is 
+
+$$
+p(y = i | x) = \frac{\pi_i|2\pi\Sigma_i|^{-\frac{1}{2}}\exp[-\frac{1}{2}(x-\mu_i)^T\Sigma_i^{-1}(x-\mu_i)]}{\sum_k\pi_k|2\pi\Sigma_k|^{-\frac{1}{2}}\exp[-\frac{1}{2}(x-\mu_k)^T\Sigma_i^{-1}(x-\mu_k)]}
+$$
+
+Linear discriminant analysis(LDA) is a special case of QDA, which makes further assumption that the covariance matrix are the same across all classes. Our problem deals with binary data, and we can classify each point by selecting a probability threhold and assign a hard hyperline to determine whether a pixel belongs to clear or cloud. 
+
+Figure ??? shows the ROC curves for the leave-one-image-out cross validation results from LDA and QDA models, in which QDA performs a little better than LDA in the first and second fold, which is in line with our exploratory analysis: the covariances for NDAI/CORR/SD may be difference between cloud and clear pixels. 
+
+<<fit-qda-2, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="AUC curve for LDA/QDA three-fold cross-validation">>=
+auc.folds <- data.frame(LDA=lda.cv$auc,
+                          QDA=qda.cv$auc,
+                          Fold=1:3) %>% 
+  melt(id="Fold", variable.name="Method",value.name="AUC") %>%
+  ggplot() + 
+  ggtitle("AUC scores") + 
+  geom_point(aes(x=Fold, y=AUC, 
+                 group=Method,colour=Method)) +
+  scale_y_continuous(limits=c(0, 1)) +
+  scale_x_discrete() +
+  theme(aspect.ratio=1) +
+  guides(size=FALSE)
+
+auc.folds
+@
+Cross-validation for QDA and LDA tells that while they work really well in the first and second fold, finding that the AUC scores 
+almost 1, it falls to perform as well in the third fold, where we regard image1 and image2 as training data and image3 as testing data. More specifically, the AUC scores for qda in the three folds are $0.960,0.971,0.888$ respectively, and for lda $0.951,0.954,0.895$.
+
+<<fit-qda-3, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Confusioin plots for qda">>=
+qda.recon.loo <- ImageReconstruct(deconstructed=qda.cv$predictions, 
+                                  nimages=3, xsplit=1, ysplit=1)
+# Aesthetics
+ggconf <- list(geom_point(aes(x=x, y=y, group=confusion, colour=confusion)),
+               scale_colour_manual(values = c("True Positive" = "white",
+                                              "False Positive" = "black",
+                                              "True Negative" = "#FF9147", 
+                                              "False Negative" = "#1e342b",
+                                              "Unknown" = "#777777")),
+               theme(legend.position="right", aspect.ratio=1))
+
+qda1.loo.conf <- ggplot(qda.recon.loo$image1) + ggconf +
+  ggtitle("Image 1") + no_axis
+qda2.loo.conf <- ggplot(qda.recon.loo$image2) + ggconf +
+  ggtitle("Image 2") + no_axis
+qda3.loo.conf <- ggplot(qda.recon.loo$image3) + ggconf +
+  ggtitle("Image 3") + no_axis
+
+grid_arrange_shared_legend(qda1.loo.conf,qda2.loo.conf,qda2.loo.conf,ncol =3 ,nrow = 1, position = "right")
+
+@
+Figure ??? shows that confusion plot after we selected the threshold to be $0.11$, which is the average of the thresholds in the 
+three-fold validation to make the point $(TRR, FPR)$ farest away from the line $y = x$. As the above plot shows, the classification suffers more from false positive and false negetive with some regions completely misclassified. Actually, those regions are hard to be classified from our bare eyes.  Calculation shows that the false positive rates of the three folds are $0.121,0.122,0.195$ and false negetive rates are $0.018,0.001,0.165$. The third fold cross-validation 
+has such a high false negative rate because image3 has a small area of cloud and some parts of it on the upper left of the image are 
+misclassified. However, the main problem is that the qda/lda classifier is hard to judge whether the "dark" regions in the images belong to cloud to clear, for example, the middle lower left region in image one, the lower right region in image two and lower middle and lower right regions on image three. All of that informs us of the irregularity of image three, for its large fraction of unknown area and complicated cloud and clear regions.
 
 \subsection{Logistic regression}
 
