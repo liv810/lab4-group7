@@ -234,32 +234,74 @@ colnames(fpr_tpr_rates_df) <- c("fpr", "tpr", "image_num")
 
 # plot results
 ggplot(fpr_tpr_rates_df) +
-  geom_line(aes(x=fpr, y=tpr, color=factor(image_num))) +
+  geom_line(aes(x = fpr, y = tpr, color = factor(image_num))) +
   labs(x = "False positive rate",
     y = "True positive rate",
     title = "Random Forest ROC curve: Leave-one-out CV") +
-  scale_color_discrete(name = "Predictions on Image #",
-                      labels = c("3 (AUC=0.885)",
+  scale_color_discrete(name = "Predictions on Image Num",
+                      labels = c("1 (AUC=0.956)",
                                  "2 (AUC=0.965)",
-                                 "1 (AUC=0.956)")) +
+                                 "3 (AUC=0.885)")) +
   # clean up plot a little bit
   theme_bw() +
   # make the title and axes labels smaller
   theme(panel.border = element_blank(),
         legend.position = "right",
-        legend.title = element_text(size=9),
-        legend.text = element_text(size=9),
-        plot.title = element_text(size=9),
+        legend.title = element_text(size = 9),
+        legend.text = element_text(size = 9),
+        plot.title = element_text(size = 9),
         axis.title.x = element_text(size = 9),
-        axis.title.y = element_text(size = 9))
+        axis.title.y = element_text(size = 9),
+        axis.text=element_text(size = 9))
 @
 
 \subsubsection{Parameter tuning}
+
+The three main parameters to tune are the number of trees in the model, the maximum number of leaves (nodes) in each tree, and the number of features to use in each tree.
+
+% Note that parameter tuning takes a long time, so we didn't want it to
+% run every time the report compiled.  You can view the code in the
+% parameter_tuning_rf.R file.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.8\textwidth]{extra/parameter_tuning_graphs}
+\end{center}
+\end{figure}
+
+First, we examine the marginal behavior between AUC and each parameter.  We see from the above graph that AUC is maximized with:
+\begin{itemize}
+\item \textbf{A high number of trees}. This is intuitive because more trees lead to a more stable prediction.  Since each tree uses different baseline data and different features, overfitting is usually not a big concern.
+\item \textbf{A moderate number of maxnodes}. This suggests that having too many leaves in any given component tree may lead to overfitting.
+\item \textbf{A small number of features tried in each tree.}  At first, this may be counterintuitive: you would think if more features are considered within each tree, this would lead to a strictly better result.  However, since our features may be correlated, then a small number of features may be better for prediction since it may decouple the correlation between features and avoid overfitting.
+\end{itemize}
+
+The below table shows the three best and three worst parameter combinations, in terms of AUC performance. The best parameter combination coresponds to 500 trees with a maximum of 10 nodes per tree and 1 feature tried at each point, which outputs a model with an AUC of 0.900.
+
+\begin{center}
+    \begin{tabular}{ | l | l | l | l |}
+    \hline
+    Num Trees & Max Nodes & Num Features & AUC \\ \hline
+    500 & 10 & 1 & 0.900 \\ \hline
+    100 & 10 & 1 & 0.898 \\ \hline
+    50 & 10 & 1 & 0.896 \\ \hline
+    ... & ... & ... & ... \\ \hline
+    100 & 10 & 3 & 0.810 \\ \hline
+    50 & 10 & 3 & 0.809 \\ \hline
+    10 & 10 & 3 & 0.803 \\ \hline
+    \hline
+    \end{tabular}
+\end{center}
+
+
 
 \subsubsection{Systematic misclassification errors}
 
 \subsubsection{Generalizability of the model}
 
+Ultimately, a model learns best about the subspaces that it has trained on, and a random forest model is no different.  Decision criteria within every component decision tree of a random forest are chosen to be optimal for data whose ranges are similar to those of the training examples.\\
+
+Although we don't have information about the variability of other images within the feature space of NDAI, CORR, and SD, we can reasonably assume that \textbf{the model will perform fairly well in images whose feature combinations are similar to those seen in Images 1, 2, and 3}, and will perform less accurately for images whose feature combinations are not.
 
 \section{Concluding thoughts}
 

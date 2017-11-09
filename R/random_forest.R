@@ -61,3 +61,87 @@ calculateROCValues <- function(predicted_and_true_labels_df,
                rep(image_num, length(perf@y.values[[1]]))))
 }
 
+parameterTuneRF <- function(ntree, maxnodes, mtry) {
+  # Takes in a vector of values to try for each below-described
+  # parameter of an RF model.
+  #
+  # Arguments:
+  #   ntree: vector of values to try for the number of trees to use
+  #   maxnodes: the maximum number of nodes allowed in a component tree
+  #   mtry: the number of features to sample at each point of the RF
+  # Returns: dataframe of AUC calculations for each parameter
+  
+  # translate the test set into a vector of 0,1 labels (instead of -1,1)
+  test_labels <- image3_filtered$label
+  test_labels[test_labels == -1] <- 0
+  
+  # keep a running vector of parameter values + corresponding AUCs
+  parameter_auc_values = c()
+  
+  # try each combination of feature combinations
+  for(ntree_value in ntree){
+    for(maxnodes_value in maxnodes){
+      for(mtry_value in mtry){
+        
+        # train an rf_model
+        rf_model <- randomForest(factor(label) ~ NDAI + SD + CORR,
+                                 data = train_data_12, ntree = ntree_value,
+                                 maxnodes = maxnodes_value, mtry = mtry_value)
+        # evaluate the model on the testing data
+        test_pred <- predict(rf_model, type = "prob",
+                             newdata = image3_filtered)
+        
+        pred = prediction(test_pred[,2], test_labels)
+        perf = performance(pred, "auc")
+        
+        # append the new parameter values and AUC onto the vector
+        parameter_auc_values = c(parameter_auc_values,
+                                 ntree_value, maxnodes_value,
+                                 mtry_value, perf@y.values)
+      }
+    }
+  }
+
+  # coerce the vector into a data frame
+  param_data_frame <- as.data.frame(matrix(parameter_auc_values,
+                                           ncol=4, byrow=TRUE))
+  # name the columns
+  colnames(param_data_frame) <- c("ntree", "maxnodes", "mtry", "AUC")
+
+  return(param_data_frame)
+}
+
+plotParameterTuning <- function(parameter) {
+  # Plots the average AUC per parameter value of a dataframe
+  # returned by the parameterTuneRF() method.
+  #
+  # Arguments:
+  #   parameter: a string of the parameter to plot, e.g. "ntree"
+  # Returns: ggplot image of the mean AUC for each value of the parameter
+  
+  
+  # first, find the mean AUC per parameter value
+  ggimage <- ggplot(parameter_tuning %>%
+                    group_by(param = parameter_tuning[,parameter]) %>%
+                    summarize(mean=mean(AUC)),
+                    aes(x = param, y = mean)) +
+    # add points and lines between the points
+    geom_point() +
+    geom_line() +
+    # add labels
+    labs(x = parameter,
+         y = "Mean AUC",
+         title = paste(parameter, " vs. mean AUC")) +
+    # clean up plot a little bit
+    theme_bw() +
+    # make the title and axes labels smaller
+    theme(panel.border = element_blank(),
+          legend.position = "right",
+          legend.title = element_text(size=9),
+          legend.text = element_text(size=9),
+          plot.title = element_text(size=9),
+          axis.title.x = element_text(size = 9),
+          axis.title.y = element_text(size = 9))
+  
+  return(ggimage)
+}
