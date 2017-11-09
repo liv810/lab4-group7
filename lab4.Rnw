@@ -294,13 +294,11 @@ Figure ??? shows the ROC curves for the leave-one-image-out cross validation res
     0.954 & 0.97 & 2 \\
     0.895& 0.887 & 3\\
     \hline
-    \hline
   \end{tabular}
-  \caption{AUC scores of QDA/LDA}
 \end{center}
 \end{table}
 
-Cross-validation for QDA and LDA tells that while they work really well in the first and second fold, finding that the AUC scores almost 1, it falls to perform as well in the third fold, where we regard image1 and image2 as training data and image3 as testing data. More specifically, the AUC scores for qda in the three folds are $0.960,0.971,0.888$ respectively, and for lda $0.951,0.954,0.895$.
+Cross-validation for QDA and LDA tells that while they work really well in the first and second fold, finding that the AUC scores almost 1, it falls to perform as well in the third fold, where we regard image1 and image2 as training data and image3 as testing data. 
 
 <<fit-qda-3, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Confusioin plots for qda">>=
 
