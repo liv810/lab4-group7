@@ -197,17 +197,6 @@ This is much preferred over randomly sampling points, since regions of ice and c
 source("R/lda-qda.R")
 source("R/explore.R")
 
-path <- "data"
-image1 <- read.table(paste0('data/', 'image1.txt'), header = F)
-image2 <- read.table(paste0('data/', 'image2.txt'), header = F)
-image3 <- read.table(paste0('data/', 'image3.txt'), header = F)
-
-# Add informative column names.
-collabs <- c('y','x','label','NDAI','SD','CORR','DF','CF','BF','AF','AN')
-names(image1) <- collabs
-names(image2) <- collabs
-names(image3) <- collabs
-
 training.image <- list(image1,image2,image3)
 
 lda.cv <- KFoldCV(training.image, method="lda")
@@ -225,13 +214,14 @@ qda.roc.info <- ggplot(qda.cv$roc) +
 
 grid_arrange_shared_legend(lda.roc.info,qda.roc.info,ncol =2 ,nrow = 1, position = "right")
 @
-Quadradic discriminant analysis(LDA) for classification aims to separate the feature space using lines(hyperplanes in higher dimenstion). It assumes that  each class $i$ has a Gaussian distribution with mean $\mu_i$ and covariance matrix $\Sigma_i$, that is 
+
+Quadradic discriminant analysis (QDA) for classification aims to separate the feature space using lines(hyperplanes in higher dimension). It assumes that  each class $i$ has a Gaussian distribution with mean $\mu_i$ and covariance matrix $\Sigma_i$, that is 
 
 $$
 p(y = i | x) = \frac{\pi_i|2\pi\Sigma_i|^{-\frac{1}{2}}\exp[-\frac{1}{2}(x-\mu_i)^T\Sigma_i^{-1}(x-\mu_i)]}{\sum_k\pi_k|2\pi\Sigma_k|^{-\frac{1}{2}}\exp[-\frac{1}{2}(x-\mu_k)^T\Sigma_i^{-1}(x-\mu_k)]}
 $$
 
-Linear discriminant analysis(LDA) is a special case of QDA, which makes further assumption that the covariance matrix are the same across all classes. Our problem deals with binary data, and we can classify each point by selecting a probability threhold and assign a hard hyperline to determine whether a pixel belongs to clear or cloud. 
+Linear discriminant analysis (LDA) is a special case of QDA, which makes the further assumption that the covariance matrices are the same among all classes.  Since our problem deals with binary data, and we can classify each point by selecting a probability threhold and assign a hard hyperline to determine whether a pixel belongs to clear or cloud. 
 
 Figure ??? shows the ROC curves for the leave-one-image-out cross validation results from LDA and QDA models, in which QDA performs a little better than LDA in the first and second fold, which is in line with our exploratory analysis: the covariances for NDAI/CORR/SD may be difference between cloud and clear pixels. 
 
