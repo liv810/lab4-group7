@@ -196,6 +196,13 @@ This is much preferred over randomly sampling points, since regions of ice and c
 
 source("R/explore.R")
 
+library(dplyr)
+library(reshape2)
+library(gridExtra)
+library(MASS)
+library(ROCR)
+library(ggplot2)
+
 path <- "data"
 image1 <- read.table(paste0('data/', 'image1.txt'), header = F)
 image2 <- read.table(paste0('data/', 'image2.txt'), header = F)
