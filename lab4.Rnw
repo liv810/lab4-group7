@@ -251,7 +251,7 @@ qda.cv = rbind(data.frame(TPR = qda.roc1@y.values[[1]], FPR = qda.roc1@x.values[
 qda.roc.info = ggplot(qda.cv) +
   geom_line(aes(x=FPR,y=TPR, group=fold, color=fold)) +
   scale_colour_discrete(name  ="Image Left Out") +
-  ggtitle("LDA")
+  ggtitle("QDA")
 
 #lda part
 lda1 = lda(label ~ NDAI + SD + CORR, data = images %>% filter(Image != 1))
