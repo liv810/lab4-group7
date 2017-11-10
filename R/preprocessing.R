@@ -16,7 +16,7 @@ func <- function(df) {
 }
 
 image <- lapply(list(image1, image2, image3), func)
-image1 <- image[[1]]
-image2 <- image[[2]]
-image3 <- image[[3]]
+images1 <- image[[1]]
+images2 <- image[[2]]
+images3 <- image[[3]]
 
