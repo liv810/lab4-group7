@@ -358,6 +358,40 @@ the middle lower left region in image one, the lower right region in image two a
 
 \subsection{Logistic regression}
 
+Logistic regression models the probability of the response taking a particular value based on the covariates. In this case, we model the probability of a pixel $Y_i$ being cloudy, given the three features: 
+
+$$
+\pi_i = P(Y_i = 1|X_i = x_i) = \frac{e^(\beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3)}{1 + e^(\beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3)}, 
+$$
+
+or 
+
+$$
+log(\frac{\pi_i}{1-\pi_i}) = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3, 
+$$
+
+where $\beta_1, \beta_2, \beta_3$ correspond to the estimates of our three features.\\
+
+Logistic regression does not make some of the key assumptions made by linear regression. Specifically, it does not assume linear relationship between the outcome and covariates, normality of covariates, or homoscedasticity. However, one assumption that is not satisfied in this dataset is the requirement that $Y_1, Y_2, ..., Y_n$ be independently distributed. Pixels have spatial correlation in that those that are close to each other are more likely to have the same binary outcome. \\ 
+
+ROC plot shows that the classification accuracies for the three images vary; Prediction made on image 2 has the highest accuracy rate, whereas predictions on images 1 and 3 have lower accuracy rates, as indicated by smaller AUC. Unlike in the results obtained in LDA, QDA, and random forest, prediction on image 3 is not substantially worse than predictions made on other images. 
+
+<<fit-logistic-regression, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 5, fig.align='center', fig.pos='h', fig.cap="ROC curve for logistic regression three-fold cross-validation.">>=
+
+source("R/logistic_regression.R")
+
+# plot ROC for three images 
+ggplot() +
+  geom_line(data = data, aes(x = fprs, y = tprs, col = group)) + 
+  scale_color_discrete(name = "Predictions on \nImage Number",
+                    labels = c("1 (AUC = 0.897)", "2 (AUC = 0.953)", 
+                               "3 (AUC = 0.898)")) + 
+  theme_bw() + 
+  xlab("false positive rate") + 
+  ylab("true positive rate")
+
+@
+
 
 \subsection{Random forests}
 
@@ -417,6 +451,7 @@ ggplot(fpr_tpr_rates_df) +
         axis.title.x = element_text(size = 9),
         axis.title.y = element_text(size = 9),
         axis.text=element_text(size = 9))
+
 @
 
 \subsubsection{Parameter tuning}
@@ -460,6 +495,76 @@ The below table shows the three best and three worst parameter combinations, in 
 
 
 \subsubsection{Systematic misclassification errors}
+
+In the three images, at least 80\% of the pixels are correctly classified as cloudy or clear. Prediction made on image 2 has the highest accuracy with very low false negative rate, whereas the prediction made on image 3 has the lowest accuracy rate. 
+
+\begin{table}[h]
+\centering
+%\caption{Misclassification rate}
+%\label{misclassification_rate}
+\begin{tabular}{l|l|l|ll}
+\cline{1-4}
+ & correctly classified (\%) & false positive (\%) & false negative (\%) &  \\ \cline{1-4}
+image 1 & 89.0 & 4.8 & 6.2 &  \\
+image 2 & 93.1 & 5.6 & 1.3 &  \\
+image 3 & 80.4 & 8.6 & 11.0 &  \\
+all images & 88.4 & 6.2 & 5.5 &  \\ \cline{1-4}
+\end{tabular}
+\end{table}
+
+There are certain feature values at which misclassification occurs more frequently than others. For example, false negatives tend to occur at either lower or upper extreme values of NDAI. False positives occur specifically when both CORR and NDAI are not extreme values. NDAI, which differs substantially across the three images, is the most indicative feature that tells us how pixels are misclassified. 
+
+<<misclassification_plot, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Patterns in misclassification errors by different feature values. Grey points denote pixels that are correctly classified, blue denotes clear pixels  incorrectly classified as cloud, and pink denotes cloudy pixels incorrectly classified as clear.">>=
+
+
+# for each image, create data that has both predicted and actual labels
+data1 <- cbind(prediction1, image1_filtered)
+data2 <- cbind(prediction2, image2_filtered)
+data3 <- cbind(prediction3, image3_filtered)
+data <- rbind(data1, data2, data3)
+
+# set a threshold
+threshold <- 0.5
+
+# create a categorical variable that indicates whether a pixels is correctly classified or not correctly classified
+data$class <- NA
+data$class[data$predicted > threshold & data$true == 1] <- "correctly classified"
+data$class[data$predicted <= threshold & data$true == 0] <- "correctly classified"
+data$class[data$predicted > threshold & data$true == 0] <- "false positive"
+data$class[data$predicted <= threshold & data$true == 1] <- "false negative"
+# convert the variable as factor
+data$class <- factor(data$class, levels = c("correctly classified", "false positive", "false negative"))
+
+
+# plot NDAI vs SD with colors indicating misclassification type
+g1 <- 
+  ggplot() + 
+  geom_point(data = data, aes(x = NDAI, y = SD, color = class), alpha = 0.1) + 
+  scale_color_manual(values = c("gray70", "turquoise2", "deeppink")) +
+  guides(colour = guide_legend(override.aes = list(alpha = 1))) + 
+  theme_bw() + 
+  theme(legend.position = "none")
+
+# plot NDAI vs CORR 
+g2 <- 
+  ggplot() + 
+  geom_point(data = data, aes(x = NDAI, y = CORR, color = class), alpha = 0.1) + 
+  scale_color_manual(name = "", values = c("gray70", "turquoise2", "deeppink")) +
+  theme_bw() + 
+  theme(legend.position = "none")
+
+# plot SD vs CORR 
+g3 <- 
+  ggplot() + 
+  geom_point(data = data, aes(x = SD, y = CORR, color = class), alpha = 0.1) + 
+  scale_color_manual(name = "", values = c("gray70", "turquoise2", "deeppink")) +
+  theme_bw() + 
+  theme(legend.position = "none")
+
+grid.arrange(g1, g2, g3, ncol = 3)
+
+@
+
 
 \subsubsection{Generalizability of the model}
 
