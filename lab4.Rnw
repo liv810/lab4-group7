@@ -361,7 +361,7 @@ the middle lower left region in image one, the lower right region in image two a
 Logistic regression models the probability of the response taking a particular value based on the covariates. In this case, we model the probability of a pixel $Y_i$ being cloudy, given the three features: 
 
 $$
-\pi_i = P(Y_i = 1|X_i = x_i) = \frac{e^(\beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3)}{1 + e^(\beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3)}, 
+\pi_i = P(Y_i = 1|X_i = x_i) = \frac{exp^(\beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3)}{1 + exp^(\beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3)}, 
 $$
 
 or 
@@ -376,19 +376,38 @@ Logistic regression does not make some of the key assumptions made by linear reg
 
 ROC plot shows that the classification accuracies for the three images vary; Prediction made on image 2 has the highest accuracy rate, whereas predictions on images 1 and 3 have lower accuracy rates, as indicated by smaller AUC. Unlike in the results obtained in LDA, QDA, and random forest, prediction on image 3 is not substantially worse than predictions made on other images. 
 
-<<fit-logistic-regression, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 5, fig.align='center', fig.pos='h', fig.cap="ROC curve for logistic regression three-fold cross-validation.">>=
+<<fit-logistic-regression, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="ROC curve for logistic regression three-fold cross-validation.">>=
 
 source("R/logistic_regression.R")
 
+prediction_LS1 <- trainAndEvaluateLR(train_data_23, images1_filtered)
+prediction_LS2 <- trainAndEvaluateLR(train_data_13, images2_filtered)
+prediction_LS3 <- trainAndEvaluateLR(train_data_12, images3_filtered)
+
+# calculate false positive and true positive rates into dataframe
+fpr_tpr_rates_df <- data.frame(
+  rbind(calculateROCValues(prediction_LS3, 3),
+      calculateROCValues(prediction_LS2, 2),
+      calculateROCValues(prediction_LS1, 1)))
+colnames(fpr_tpr_rates_df) <- c("fpr", "tpr", "image_num")
+
+
 # plot ROC for three images 
-ggplot() +
-  geom_line(data = data, aes(x = fprs, y = tprs, col = group)) + 
+ggplot(fpr_tpr_rates_df) + 
+  geom_line(aes(x = fpr, y = tpr, color = factor(image_num))) + 
   scale_color_discrete(name = "Predictions on \nImage Number",
                     labels = c("1 (AUC = 0.897)", "2 (AUC = 0.953)", 
                                "3 (AUC = 0.898)")) + 
   theme_bw() + 
   xlab("false positive rate") + 
-  ylab("true positive rate")
+  ylab("true positive rate") + 
+  theme(panel.border = element_blank(), 
+        legend.title = element_text(size = 9),
+        legend.text = element_text(size = 9),
+        plot.title = element_text(size = 9),
+        axis.title.x = element_text(size = 9),
+        axis.title.y = element_text(size = 9),
+        axis.text=element_text(size = 9))
 
 @
 
@@ -512,10 +531,13 @@ all images & 88.4 & 6.2 & 5.5 &  \\ \cline{1-4}
 \end{tabular}
 \end{table}
 
-There are certain feature values at which misclassification occurs more frequently than others. For example, false negatives tend to occur at either lower or upper extreme values of NDAI. False positives occur specifically when both CORR and NDAI are not extreme values. NDAI, which differs substantially across the three images, is the most indicative feature that tells us how pixels are misclassified. 
+There are certain feature values at which misclassification occurs more frequently than others. For example, false negatives tend to occur in the upper extreme and lower values of NDAI. It makes sense conceptually that low NDAI values are mistakenly classified as clear, because clear regions have more isotropic surface-leaving radiation. False positives tend to occur in the upper half of NDAI values. This is in part explained by the presence of rough ice regions, which may have been mistakenly classified as clouds because they have moderately high NDAI values. \\
+
+NDAI, which differs substantially between cloud and clear pixels, is the most indicative of how a given pixel is misclassified. On the other hand, SD is the least informative feature, because both correct and false classification occurs at almost every value of SD. \\
+
+Pixels are rarely misclassified at small values of NDAI, or at large values of CORR.
 
 <<misclassification_plot, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Patterns in misclassification errors by different feature values. Grey points denote pixels that are correctly classified, blue denotes clear pixels  incorrectly classified as cloud, and pink denotes cloudy pixels incorrectly classified as clear.">>=
-
 
 # for each image, create data that has both predicted and actual labels
 data1 <- cbind(prediction1, image1_filtered)
@@ -533,8 +555,9 @@ data$class[data$predicted <= threshold & data$true == 0] <- "correctly classifie
 data$class[data$predicted > threshold & data$true == 0] <- "false positive"
 data$class[data$predicted <= threshold & data$true == 1] <- "false negative"
 # convert the variable as factor
-data$class <- factor(data$class, levels = c("correctly classified", "false positive", "false negative"))
-
+data$class <- factor(data$class, 
+                     levels = c("correctly classified", 
+                                "false positive", "false negative"))
 
 # plot NDAI vs SD with colors indicating misclassification type
 g1 <- 
@@ -543,7 +566,11 @@ g1 <-
   scale_color_manual(values = c("gray70", "turquoise2", "deeppink")) +
   guides(colour = guide_legend(override.aes = list(alpha = 1))) + 
   theme_bw() + 
-  theme(legend.position = "none")
+  theme(legend.position = "none", 
+        panel.border = element_blank(), 
+        axis.title.x = element_text(size = 9),
+        axis.title.y = element_text(size = 9),
+        axis.text=element_text(size = 9))
 
 # plot NDAI vs CORR 
 g2 <- 
@@ -551,7 +578,11 @@ g2 <-
   geom_point(data = data, aes(x = NDAI, y = CORR, color = class), alpha = 0.1) + 
   scale_color_manual(name = "", values = c("gray70", "turquoise2", "deeppink")) +
   theme_bw() + 
-  theme(legend.position = "none")
+  theme(legend.position = "none", 
+        panel.border = element_blank(), 
+        axis.title.x = element_text(size = 9),
+        axis.title.y = element_text(size = 9),
+        axis.text=element_text(size = 9))
 
 # plot SD vs CORR 
 g3 <- 
@@ -559,9 +590,13 @@ g3 <-
   geom_point(data = data, aes(x = SD, y = CORR, color = class), alpha = 0.1) + 
   scale_color_manual(name = "", values = c("gray70", "turquoise2", "deeppink")) +
   theme_bw() + 
-  theme(legend.position = "none")
+  theme(legend.position = "none", 
+        panel.border = element_blank(), 
+        axis.title.x = element_text(size = 9),
+        axis.title.y = element_text(size = 9),
+        axis.text=element_text(size = 9))
 
-grid.arrange(g1, g2, g3, ncol = 3)
+grid_arrange_shared_legend(g1, g2, g3, ncol = 3, nrow = 1, position = "bottom")
 
 @
 
@@ -572,8 +607,11 @@ Ultimately, a model learns best about the subspaces that it has trained on, and 
 
 Although we don't have information about the variability of other images within the feature space of NDAI, CORR, and SD, we can reasonably assume that \textbf{the model will perform fairly well in images whose feature combinations are similar to those seen in Images 1, 2, and 3}, and will perform less accurately for images whose feature combinations are not.
 
-\section{Concluding thoughts}
+\section{Conclusion}
 
+In this report, we have explored and modeled various classification methods to perform cloud detection, based on satellite images of radiances in the polar regions. Data consited of radiation values of three locations, each measured from six different angles. Classification models were trained on two images using three useful features that can differentiate pixels from cloudy ones, and the models were tested on the remaining single image. Validity of each model was assessed via three-fold cross validation technique and the area under the Receiver Operation Curves (ROC). \\
+
+Among four probability prediction models -- logistic regression, linear discriminant analysis, fisher discriminant analysis, and random forest -- random forest provided the most accurate result. Misclassification analysis lead us to identify certain subspaces and feature values that are more likely to be misclassfied than others, such as rough ice regions that were incorrectly classified as clouds. Performance of the model is likely to depend on how similar the test image is to Images 1, 2, and 3, in terms of feature combinations. 
 \section{References}
 
 (1)  Shi, Tao, et al. "Daytime arctic cloud detection based on multi-angle satellite data with case studies." Journal of the American Statistical Association 103.482 (2008): 584-593.
