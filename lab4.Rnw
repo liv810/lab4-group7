@@ -192,16 +192,9 @@ This is much preferred over randomly sampling points, since regions of ice and c
 
 \section{LDA/QDA}
 
-<<fit-LDA-QDA-part, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="ROC curve for LDA/QDA three-fold cross-validation.">>=
+<<fit-LDA-QDA-part, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="ROC curves for LDA/QDA three-fold cross-validation with AUC scores.">>=
 
-source("R/explore.R")
-
-library(dplyr)
-library(reshape2)
-library(gridExtra)
-library(MASS)
-library(ROCR)
-library(ggplot2)
+source("R/lda-qda.R")
 
 path <- "data"
 image1 <- read.table(paste0('data/', 'image1.txt'), header = F)
@@ -220,66 +213,12 @@ training.image <- list(image1,image2,image3)
 Qimage1 = mutate(image1, Image = 1) %>% filter(label != 0)
 Qimage2 = mutate(image2, Image = 2) %>% filter(label != 0)
 Qimage3 = mutate(image3, Image = 3) %>% filter(label != 0)
-images = rbind(Qimage1, Qimage2, Qimage3)
 
 
-#QDA with one-image-left-out CV
-qda1 = qda(label ~ NDAI + SD + CORR, data = images %>% filter(Image != 1))
-qda2 = qda(label ~ NDAI + SD + CORR, data = images %>% filter(Image != 2))
-qda3 = qda(label ~ NDAI + SD + CORR, data = images %>% filter(Image != 3))
+#the plotting information for ROC curves.
+plot.info <- qda.lda.info(Qimage1,Qimage2,Qimage3)
 
-#predict the left-out image with QDA
-qda1.pred = predict(qda1, type="prob",newdata=Qimage1)
-qda2.pred = predict(qda2, type="prob",newdata=Qimage2)
-qda3.pred = predict(qda3, type="prob",newdata=Qimage3)
-
-#ROC values and ROC curves
-qda.roc1 = performance(prediction(qda1.pred$posterior[,2], Qimage1$label), "tpr", "fpr")
-qda.roc2 = performance(prediction(qda2.pred$posterior[,2], Qimage2$label), "tpr", "fpr")
-qda.roc3 = performance(prediction(qda3.pred$posterior[,2], Qimage3$label), "tpr", "fpr")
-
-#AUC scores
-qda.auc1 = performance(prediction(qda1.pred$posterior[,2], Qimage1$label), "auc")@y.values[[1]]
-qda.auc2 = performance(prediction(qda2.pred$posterior[,2], Qimage2$label), "auc")@y.values[[1]]
-qda.auc3 = performance(prediction(qda3.pred$posterior[,2], Qimage3$label), "auc")@y.values[[1]]
-
-#Plot the ROC curve
-qda.cv = rbind(data.frame(TPR = qda.roc1@y.values[[1]], FPR = qda.roc1@x.values[[1]], fold = factor(1)),
-               data.frame(TPR = qda.roc2@y.values[[1]], FPR = qda.roc2@x.values[[1]], fold = factor(2)),
-               data.frame(TPR = qda.roc3@y.values[[1]], FPR = qda.roc3@x.values[[1]], fold = factor(3)))
-
-qda.roc.info = ggplot(qda.cv) +
-  geom_line(aes(x=FPR,y=TPR, group=fold, color=fold)) +
-  scale_colour_discrete(name  ="Image Left Out") +
-  ggtitle("QDA")
-
-#lda part
-lda1 = lda(label ~ NDAI + SD + CORR, data = images %>% filter(Image != 1))
-lda2 = lda(label ~ NDAI + SD + CORR, data = images %>% filter(Image != 2))
-lda3 = lda(label ~ NDAI + SD + CORR, data = images %>% filter(Image != 3))
-
-lda1.pred = predict(lda1, type="prob",newdata=Qimage1)
-lda2.pred = predict(lda2, type="prob",newdata=Qimage2)
-lda3.pred = predict(lda3, type="prob",newdata=Qimage3)
-
-lda.roc1 = performance(prediction(lda1.pred$posterior[,2], Qimage1$label), "tpr", "fpr")
-lda.roc2 = performance(prediction(lda2.pred$posterior[,2], Qimage2$label), "tpr", "fpr")
-lda.roc3 = performance(prediction(lda3.pred$posterior[,2], Qimage3$label), "tpr", "fpr")
-
-lda.auc1 = performance(prediction(lda1.pred$posterior[,2], Qimage1$label), "auc")@y.values[[1]]
-lda.auc2 = performance(prediction(lda2.pred$posterior[,2], Qimage2$label), "auc")@y.values[[1]]
-lda.auc3 = performance(prediction(lda3.pred$posterior[,2], Qimage3$label), "auc")@y.values[[1]]
-
-lda.cv = rbind(data.frame(TPR = lda.roc1@y.values[[1]], FPR = lda.roc1@x.values[[1]], fold = factor(1)),
-               data.frame(TPR = lda.roc2@y.values[[1]], FPR = lda.roc2@x.values[[1]], fold = factor(2)),
-               data.frame(TPR = lda.roc3@y.values[[1]], FPR = lda.roc3@x.values[[1]], fold = factor(3)))
-
-lda.roc.info = ggplot(lda.cv) +
-  geom_line(aes(x=FPR,y=TPR, group=fold, color=fold)) +
-  scale_colour_discrete(name  ="Image Left Out") +
-  ggtitle("LDA")
-
-grid_arrange_shared_legend(lda.roc.info,qda.roc.info,ncol =2 ,nrow = 1, position = "right")
+grid_arrange_shared_legend(plot.info[[2]],plot.info[[1]],ncol =2 ,nrow = 1, position = "right")
 @
 
 Quadradic discriminant analysis(LDA) for classification aims to separate the feature space using lines(hyperplanes in higher dimenstion). It assumes that  each class $i$ has a Gaussian distribution with mean $\mu_i$ and covariance matrix $\Sigma_i$, that is 
@@ -292,63 +231,13 @@ Linear discriminant analysis(LDA) is a special case of QDA, which makes further 
 
 Figure ??? shows the ROC curves for the leave-one-image-out cross validation results from LDA and QDA models, in which QDA performs a little better than LDA in the first and second fold, which is in line with our exploratory analysis: the covariances for NDAI/CORR/SD may be difference between cloud and clear pixels. 
 
-\begin{table}
-\begin{center}
-  \begin{tabular}{ | c | c | c |}
-    \hline
-    LDA & QDA & FOLD \\ \hline
-    0.951 & 0.959 & 1 \\ 
-    0.954 & 0.97 & 2 \\
-    0.895& 0.887 & 3\\
-    \hline
-  \end{tabular}
-\end{center}
-\end{table}
-
 Cross-validation for QDA and LDA tells that while they work really well in the first and second fold, finding that the AUC scores almost 1, it falls to perform as well in the third fold, where we regard image1 and image2 as training data and image3 as testing data. 
 
-<<fit-qda-3, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Confusioin plots for qda">>=
+<<fit-qda-3, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Confusioin plots for QDA. white, green, black and orange areas stand for true-positive, true-negative, false-positive and false-negative respectively.">>=
 
-#Find the threshold(alpha-values)
-qda.thresh1 = qda.roc1@alpha.values[[1]][which.max(qda.roc1@y.values[[1]] - qda.roc1@x.values[[1]])]
-qda.thresh2 = qda.roc2@alpha.values[[1]][which.max(qda.roc2@y.values[[1]] - qda.roc2@x.values[[1]])]
-qda.thresh3 = qda.roc3@alpha.values[[1]][which.max(qda.roc3@y.values[[1]] - qda.roc3@x.values[[1]])]
+conf.info <- qda.confustion(Qimage1,Qimage2,Qimage3)
 
-#use the mean of the best thresholdes as our classifier
-thresh = mean(c(qda.thresh1,qda.thresh2,qda.thresh3)) #0.21
-
-#Get the confusion plots
-Qimage1 = Qimage1 %>% mutate(posterior = qda1.pred$posterior[,2]) %>% 
-  mutate(confusion = ifelse(label == -1,ifelse(posterior < thresh,"TN","FN"),ifelse(posterior >= thresh,"TP","FP")))
-         
-Qimage2 = Qimage2 %>% mutate(posterior = qda2.pred$posterior[,2]) %>% 
-  mutate(confusion = ifelse(label == -1,ifelse(posterior < thresh,"TN","FN"),ifelse(posterior >= thresh,"TP","FP")))
-
-Qimage3 = Qimage3 %>% mutate(posterior = qda3.pred$posterior[,2]) %>% 
-  mutate(confusion = ifelse(label == -1,ifelse(posterior < thresh,"TN","FN"),ifelse(posterior >= thresh,"TP","FP")))
-
-ggconf <- list(geom_point(aes(x=x, y=y, group=confusion, colour=confusion)),
-               scale_colour_manual(values = c("TP" = "white","FP" = "black","TN" = "#1eee2b","FN" = "#ff9428","Unknown" = "#777777")),
-               theme(legend.position="right", aspect.ratio=1))
-
-# theme to remove axis
-no_axis <- theme(axis.line=element_blank(),
-                 axis.text.x=element_blank(),
-                 axis.text.y=element_blank(),
-                 axis.ticks=element_blank(),
-                 axis.title.y=element_blank(),
-                 axis.title.x=element_blank())
-
-qda1.conf <- ggplot(Qimage1) + ggconf +
-  ggtitle("Image 1") + no_axis
-
-qda2.conf <- ggplot(Qimage2) + ggconf +
-  ggtitle("Image 2") + no_axis
-
-qda3.conf <- ggplot(Qimage3) + ggconf +
-  ggtitle("Image 3") + no_axis
-
-grid_arrange_shared_legend(qda1.conf,qda2.conf,qda3.conf,ncol =3 ,nrow = 1, position = "right")
+grid_arrange_shared_legend(conf.info[[1]],conf.info[[2]],conf.info[[3]],ncol =3 ,nrow = 1, position = "right")
 @
 
 Figure ??? shows that confusion plot after we selected the threshold to be $0.21$, which is the average of the thresholds in the three-fold validation to make the point $(TRR, FPR)$ farest away from the line $y = x$. As the above plot shows, the classification suffers more from false positive and 
