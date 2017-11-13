@@ -599,7 +599,43 @@ g3 <-
 grid_arrange_shared_legend(g1, g2, g3, ncol = 3, nrow = 1, position = "bottom")
 
 @
+<<Confusion-Plot, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Confusion plots for the three predicted images. White color stands for the cloudy area which is correctly classified and green color for the clear area which is correctly classified; black area and orange area denote the false positive and false negative respectively. Grey area is unknown.">>=
+ggconf2 <- list(geom_point(aes(x=x, y=y, group=confusion, colour=confusion)),
+               scale_colour_manual(values = c("TP" = "white","FP" = "black","TN" = "#1eee2b","FN" = "#ff9428","Unknown" = "#777777")),
+               theme(legend.position="right", aspect.ratio=1))
 
+#Get the confusion plots
+data1 = data1 %>% mutate(confusion = ifelse(label == -1,ifelse(predicted< threshold,"TN","FN"),ifelse(predicted >= threshold,"TP","FP")))
+         
+data2 = data2 %>% mutate(confusion = ifelse(label == -1,ifelse(predicted< threshold,"TN","FN"),ifelse(predicted >= threshold,"TP","FP")))
+
+data3 = data3 %>% mutate(confusion = ifelse(label == -1,ifelse(predicted< threshold,"TN","FN"),ifelse(predicted >= threshold,"TP","FP")))
+
+ggconf <- list(geom_point(aes(x=x, y=y, group=confusion, colour=confusion)),
+               scale_colour_manual(values = c("TP" = "white","FP" = "black","TN" = "#1eee2b","FN" = "#ff9428","Unknown" = "#777777")),
+               theme(legend.position="right", aspect.ratio=1))
+
+# theme to remove axis
+no_axis <- theme(axis.line=element_blank(),
+                 axis.text.x=element_blank(),
+                 axis.text.y=element_blank(),
+                 axis.ticks=element_blank(),
+                 axis.title.y=element_blank(),
+                 axis.title.x=element_blank())
+
+rf1.conf <- ggplot(data1) + ggconf +
+  ggtitle("Image 1") + no_axis
+
+rf2.conf <- ggplot(data2) + ggconf +
+  ggtitle("Image 2") + no_axis
+
+rf3.conf <- ggplot(data3) + ggconf +
+  ggtitle("Image 3") + no_axis
+
+grid_arrange_shared_legend(rf1.conf,rf2.conf,rf3.conf,ncol =3 ,nrow = 1, position = "right")
+
+@
+The confusion plot of random forest shows some different patterns compared to LDA/QDA and logistic regression. First, random forest seems to be suffer less from high false positive rate shown in the plot. For example, the island like southwest clear part in image one, the southeast parts in image two and image three which are almost completely misclassified in LDA/QDA model, have some area at the border of it is classified correctly in random forest. Besides, classification from random forest seems to be of more noise, which means that there are some dots insides a large cloudy or clear area. 
 
 \subsubsection{Generalizability of the model}
 
