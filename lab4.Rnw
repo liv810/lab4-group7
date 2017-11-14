@@ -141,7 +141,7 @@ Recall that the three features, as described in detail above, are:
 \item NDAI (a proxy for surface roughness, measured by the normalized difference between measurements in the forward vs. backward pointing cameras)
 \end{itemize}
 
-By itself, NDAI has the most discriminatory power between the presence of ice and the absence of ice (either cloudy or unknown).  This can be seen by the distinct peaks in the leftmost graph below.
+By itself, NDAI has the most discriminatory power between the presence of ice and the absence of ice (either cloudy or unknown).  This can be seen by the distinct cloud vs ice peaks in the leftmost graph below.
 
 <<plot-features-for-image-1, cached=TRUE, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Conditional densities of ice vs. cloud vs. unknown by different angles. Cloud resolutions become increasingly bimodal as measurement angle decreases.">>=
 
@@ -180,7 +180,7 @@ grid_arrange_shared_legend(
 
 The classification approach of Shi et. al. hinges upon an enhanced linear correlation matching (ELCM) algorithm.  However, we noted that this approach depended on having data images available from multiple orbits and/or consecutive MISR blocks.  Since we do not have access to this full data set, reproducing this ELCM approach is not possible.
 
-For that reason, we instead resort to more classic classification methods: QDA/LDA, logistic regression, and random forests.  First, we train baseline versions of these methods.   We note that random forests produces the best AUC values of the three baseline models, so we proceed to do additional parameter tuning and analysis for that model.
+For that reason, we instead resort to more classic classification methods: quadratic and linear discriminant analysis, logistic regression, and random forests.  First, we train baseline versions of these methods.   We note that random forests produces the best AUC values of the three baseline models, so we proceed to do additional parameter tuning and analysis for that model.
 
 We decided before training these methods on a few approaches:
 
@@ -196,17 +196,6 @@ This is much preferred over randomly sampling points, since regions of ice and c
 
 source("R/lda-qda.R")
 
-path <- "data"
-image1 <- read.table(paste0('data/', 'image1.txt'), header = F)
-image2 <- read.table(paste0('data/', 'image2.txt'), header = F)
-image3 <- read.table(paste0('data/', 'image3.txt'), header = F)
-
-# Add informative column names.
-collabs <- c('y','x','label','NDAI','SD','CORR','DF','CF','BF','AF','AN')
-names(image1) <- collabs
-names(image2) <- collabs
-names(image3) <- collabs
-
 training.image <- list(image1,image2,image3)
 
 #Only to train and testing on the labeled data
@@ -214,36 +203,36 @@ Qimage1 = mutate(image1, Image = 1) %>% filter(label != 0)
 Qimage2 = mutate(image2, Image = 2) %>% filter(label != 0)
 Qimage3 = mutate(image3, Image = 3) %>% filter(label != 0)
 
-
 #the plotting information for ROC curves.
 plot.info <- qda.lda.info(Qimage1,Qimage2,Qimage3)
 
-grid_arrange_shared_legend(plot.info[[2]],plot.info[[1]],ncol =2 ,nrow = 1, position = "right")
+grid_arrange_shared_legend(plot.info[[2]], plot.info[[1]],
+                           ncol =2, nrow = 1, position = "right")
 @
 
-Quadradic discriminant analysis(LDA) for classification aims to separate the feature space using lines(hyperplanes in higher dimenstion). It assumes that  each class $i$ has a Gaussian distribution with mean $\mu_i$ and covariance matrix $\Sigma_i$, that is 
+Quadratic discriminant analysis (QDA) is a method used in order to fit the best separator between two different classes of data. It assumes that  each class $i$ has a Gaussian distribution with mean $\mu_i$ and covariance matrix $\Sigma_i$, that is:
 
 $$
 p(y = i | x) = \frac{\pi_i|2\pi\Sigma_i|^{-\frac{1}{2}}\exp[-\frac{1}{2}(x-\mu_i)^T\Sigma_i^{-1}(x-\mu_i)]}{\sum_k\pi_k|2\pi\Sigma_k|^{-\frac{1}{2}}\exp[-\frac{1}{2}(x-\mu_k)^T\Sigma_i^{-1}(x-\mu_k)]}
 $$
 
-Linear discriminant analysis(LDA) is a special case of QDA, which makes further assumption that the covariance matrix are the same across all classes. Our problem deals with binary data, and we can classify each point by selecting a probability threhold and assign a hard hyperline to determine whether a pixel belongs to clear or cloud. 
+Linear discriminant analysis (LDA) is nearly identical to QDA, except that it makes the further assumption that the covariance matrix is the same across all classes. We note from our exploratory analysis (e.g. Figure 6) that the assumption of Gaussian data within each class is reasonable, albeit not perfect.  We also note that 
 
-Figure ??? shows the ROC curves for the leave-one-image-out cross validation results from LDA and QDA models, in which QDA performs a little better than LDA in the first and second fold, which is in line with our exploratory analysis: the covariances for NDAI/CORR/SD may be difference between cloud and clear pixels. 
+Figure 9 shows the ROC curves for the leave-one-image-out cross validation results from our LDA and QDA models.  Note that QDA performs slightly better than LDA in the first and second fold and worse in the third fold, where both QDA and LDA performed significantly worse than normal. This may suggest that image 1 and image 2 are similar, so training on one of them helps predict the classes for the other, but that image 3 might have feature combinations that are significantly different from those found in image 1 and image 2.
 
-Cross-validation for QDA and LDA tells that while they work really well in the first and second fold, finding that the AUC scores almost 1, it falls to perform as well in the third fold, where we regard image1 and image2 as training data and image3 as testing data. 
-
-<<fit-qda-3, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Confusioin plots for QDA. white, green, black and orange areas stand for true-positive, true-negative, false-positive and false-negative respectively.">>=
+<<fit-qda-3, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Plots showing correctly-classified and misclassified points using the LDA model.">>=
 
 conf.info <- qda.confustion(Qimage1,Qimage2,Qimage3)
 
-grid_arrange_shared_legend(conf.info[[1]],conf.info[[2]],conf.info[[3]],ncol =3 ,nrow = 1, position = "right")
+grid_arrange_shared_legend(conf.info[[1]],conf.info[[2]],conf.info[[3]],
+                           ncol = 3 ,nrow = 1, position = "right")
 @
 
-Figure ??? shows that confusion plot after we selected the threshold to be $0.21$, which is the average of the thresholds in the three-fold validation to make the point $(TRR, FPR)$ farest away from the line $y = x$. As the above plot shows, the classification suffers more from false positive and 
-false negetive with some regions completely misclassified. Actually, those regions are hard to be classified from our bare eyes.  Calculation shows that the false positive rates of the three folds are $0.121,0.122,0.195$ and false negetive rates are $0.018,0.001,0.165$. The third fold cross-validation 
-has such a high false negative rate because image3 has a small area of cloud and some parts of it on the upper left of the image are misclassified. However, the main problem is that the qda/lda classifier is hard to judge whether the "dark" regions in the images belong to cloud to clear, for example, 
-the middle lower left region in image one, the lower right region in image two and lower middle and lower right regions on image three. All of that informs us of the irregularity of image three, for its large fraction of unknown area and complicated cloud and clear regions.
+Figure 10 shows the confusion plot after selecting a cloud-vs.-ice threshold of 0.21, which was determined by averaging the thresholds in the three-fold validation to make the point $(TRR, FPR)$ furthest away from the line $y = x$.
+
+As the above plot shows, misclassification tends to occur in entire regions rather than distinct points.  False positive rates in the three folds respectively are 0.121, 0.122, and 0.195, and false negative rates are 0.018, 0.001, and 0.165. The third fold cross-validation, in particular, has a high false negative rate because image 3 has a small area of cloud in the upper left part of the image that is largely misclassified.
+
+We deduce from this confusion plot that the main problem with the QDA/LDA classifier is its inability to judge whether the "dark" regions in the images are cloud versus ice.  This pattern is consistent between the middle lower left region in image one, the lower right region in image two, and the lower middle and lower right regions in image three.
 
 \subsection{Logistic regression}
 
@@ -259,11 +248,11 @@ $$
 log(\frac{\pi_i}{1-\pi_i}) = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3, 
 $$
 
-where $\beta_1, \beta_2, \beta_3$ correspond to the estimates of our three features.\\
+where $\beta_1, \beta_2, \beta_3$ correspond to the estimates of the coefficients for our three features.\\
 
-Logistic regression does not make some of the key assumptions made by linear regression. Specifically, it does not assume linear relationship between the outcome and covariates, normality of covariates, or homoscedasticity. However, one assumption that is not satisfied in this dataset is the requirement that $Y_1, Y_2, ..., Y_n$ be independently distributed. Pixels have spatial correlation in that those that are close to each other are more likely to have the same binary outcome. \\ 
+Logistic regression does not make some of the key assumptions made by linear regression. Specifically, it does not assume a linear relationship between the outcome and covariates, normality of covariates, or homoscedasticity. However, one assumption that is not satisfied in this dataset is the requirement that $Y_1, Y_2, ..., Y_n$ be independently distributed. Pixels have spatial correlation in that those that are close to each other are more likely to have the same binary outcome. \\ 
 
-ROC plot shows that the classification accuracies for the three images vary; Prediction made on image 2 has the highest accuracy rate, whereas predictions on images 1 and 3 have lower accuracy rates, as indicated by smaller AUC. Unlike in the results obtained in LDA, QDA, and random forest, prediction on image 3 is not substantially worse than predictions made on other images. 
+Our ROC plot shows that the classification accuracies for the three images vary from image to image.  The prediction made on image 2 has the highest accuracy rate, whereas predictions on images 1 and 3 have lower accuracy rates, as indicated by smaller AUC. Unlike the results obtained by LDA, QDA, and random forests, the prediction accuracy of image 3 is not substantially worse than predictions made on other images. 
 
 <<fit-logistic-regression, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="ROC curve for logistic regression three-fold cross-validation.">>=
 
@@ -288,8 +277,9 @@ ggplot(fpr_tpr_rates_df) +
                     labels = c("1 (AUC = 0.897)", "2 (AUC = 0.953)", 
                                "3 (AUC = 0.898)")) + 
   theme_bw() + 
-  xlab("false positive rate") + 
-  ylab("true positive rate") + 
+  labs(x = "False positive rate",
+         y = "True positive rate",
+         title = "Logistic Regression ROC curve: Leave-one-out CV") + 
   theme(panel.border = element_blank(), 
         legend.title = element_text(size = 9),
         legend.text = element_text(size = 9),
@@ -320,7 +310,7 @@ This is illustrated visually in the below picture.
 \caption{Graphical introduction to random forests [2].}
 \end{figure}
 
-In our case, we fit random forest with 100 trees three times (using the three-fold cross validation approach described above).  The resulting ROC-curve is shown below, and reveals very strong performance, shown by the model's ability to achieve a high true positive rate with quite a low corresponding false negative rate.
+In our case, we fit random forests with 100 trees using three-fold cross validation approach described above.  The resulting ROC-curve is shown below, and reveals strong performance, shown by the model's ability to achieve a high true positive rate with quite a low corresponding false negative rate.
 
 <<fit-random-forest, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="ROC curve for random forest three-fold cross-validation.">>=
 
@@ -370,13 +360,14 @@ The three main parameters to tune are the number of trees in the model, the maxi
 % run every time the report compiled.  You can view the code in the
 % parameter_tuning_rf.R file.
 
-\begin{figure}
+\begin{figure}[h]
 \begin{center}
 \includegraphics[width=0.8\textwidth]{extra/parameter_tuning_graphs}
 \end{center}
+\caption{The above graphs show the marginal effect between AUC and changing three parameters of a random forest (number of trees, maximum unmber of nodes, and number of features to try in each tree).}
 \end{figure}
 
-First, we examine the marginal behavior between AUC and each parameter.  We see from the above graph that AUC is maximized with:
+First, we examine the marginal behavior between AUC and each parameter.  We see from the below graph that AUC is maximized with:
 \begin{itemize}
 \item \textbf{A high number of trees}. This is intuitive because more trees lead to a more stable prediction.  Since each tree uses different baseline data and different features, overfitting is usually not a big concern.
 \item \textbf{A moderate number of maxnodes}. This suggests that having too many leaves in any given component tree may lead to overfitting.
@@ -464,8 +455,10 @@ g1 <-
 # plot NDAI vs CORR 
 g2 <- 
   ggplot() + 
-  geom_point(data = data, aes(x = NDAI, y = CORR, color = class), alpha = 0.1) + 
-  scale_color_manual(name = "", values = c("gray70", "turquoise2", "deeppink")) +
+  geom_point(data = data, aes(x = NDAI, y = CORR,
+                              color = class), alpha = 0.1) + 
+  scale_color_manual(name = "",
+                     values = c("gray70", "turquoise2", "deeppink")) +
   theme_bw() + 
   theme(legend.position = "none", 
         panel.border = element_blank(), 
@@ -488,40 +481,47 @@ g3 <-
 grid_arrange_shared_legend(g1, g2, g3, ncol = 3, nrow = 1, position = "bottom")
 
 @
-<<Confusion-Plot, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Confusion plots for the three predicted images. White color stands for the cloudy area which is correctly classified and green color for the clear area which is correctly classified; black area and orange area denote the false positive and false negative respectively. Grey area is unknown.">>=
-ggconf2 <- list(geom_point(aes(x=x, y=y, group=confusion, colour=confusion)),
-               scale_colour_manual(values = c("TP" = "white","FP" = "black","TN" = "#1eee2b","FN" = "#ff9428","Unknown" = "#777777")),
-               theme(legend.position="right", aspect.ratio=1))
-
+<<Confusion-Plot, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Plots showing correctly-classified and misclassified points using the random forest model.">>=
 #Get the confusion plots
-data1 = data1 %>% mutate(confusion = ifelse(label == -1,ifelse(predicted< threshold,"TN","FN"),ifelse(predicted >= threshold,"TP","FP")))
+data1 = data1 %>% mutate(confusion = ifelse(label == -1,
+   ifelse(predicted< threshold,"TN","FN"),
+   ifelse(predicted >= threshold,"TP","FP")))
          
-data2 = data2 %>% mutate(confusion = ifelse(label == -1,ifelse(predicted< threshold,"TN","FN"),ifelse(predicted >= threshold,"TP","FP")))
+data2 = data2 %>% mutate(confusion = ifelse(label == -1,
+  ifelse(predicted< threshold,"TN","FN"),
+  ifelse(predicted >= threshold,"TP","FP")))
 
-data3 = data3 %>% mutate(confusion = ifelse(label == -1,ifelse(predicted< threshold,"TN","FN"),ifelse(predicted >= threshold,"TP","FP")))
+data3 = data3 %>% mutate(confusion = ifelse(label == -1,ifelse(
+  predicted< threshold,"TN","FN"),
+  ifelse(predicted >= threshold,"TP","FP")))
 
-ggconf <- list(geom_point(aes(x=x, y=y, group=confusion, colour=confusion)),
-               scale_colour_manual(values = c("TP" = "white","FP" = "black","TN" = "#1eee2b","FN" = "#ff9428","Unknown" = "#777777")),
-               theme(legend.position="right", aspect.ratio=1))
+ggconf <- list(geom_point(aes(x=x, y=y,
+                              group=confusion,
+                              colour=confusion), alpha=0.1),
+                 scale_colour_manual(values = c("TP" = "gray70",
+                                                "FP" = "turquoise2",
+                                                "TN" = "lightgoldenrod1",
+                                                "FN" = "deeppink",
+                                                "Unknown" = "#777777")),
+               theme(legend.position="right", aspect.ratio=1),
+               guides(color=guide_legend(override.aes=
+                                           list(size = 2.5, alpha=0.5))),
+               theme_bw(), no_axis)
+  
 
-# theme to remove axis
-no_axis <- theme(axis.line=element_blank(),
-                 axis.text.x=element_blank(),
-                 axis.text.y=element_blank(),
-                 axis.ticks=element_blank(),
-                 axis.title.y=element_blank(),
-                 axis.title.x=element_blank())
-
+# Plot the three images
 rf1.conf <- ggplot(data1) + ggconf +
-  ggtitle("Image 1") + no_axis
+  ggtitle("Image 1") + blank_theme + no_axis
 
 rf2.conf <- ggplot(data2) + ggconf +
-  ggtitle("Image 2") + no_axis
+  ggtitle("Image 2") + blank_theme + no_axis
 
 rf3.conf <- ggplot(data3) + ggconf +
-  ggtitle("Image 3") + no_axis
+  ggtitle("Image 3") + blank_theme + no_axis
 
-grid_arrange_shared_legend(rf1.conf,rf2.conf,rf3.conf,ncol =3 ,nrow = 1, position = "right")
+grid_arrange_shared_legend(rf1.conf, rf2.conf, rf3.conf,
+                           ncol = 3 ,nrow = 1,
+                           position = "right")
 
 @
 The confusion plot of random forest shows some different patterns compared to LDA/QDA and logistic regression. First, random forest seems to be suffer less from high false positive rate shown in the plot. For example, the island like southwest clear part in image one, the southeast parts in image two and image three which are almost completely misclassified in LDA/QDA model, have some area at the border of it is classified correctly in random forest. Besides, classification from random forest seems to be of more noise, which means that there are some dots insides a large cloudy or clear area. 
@@ -537,9 +537,10 @@ Although we don't have information about the variability of other images within 
 In this report, we have explored and modeled various classification methods to perform cloud detection, based on satellite images of radiances in the polar regions. Data consited of radiation values of three locations, each measured from six different angles. Classification models were trained on two images using three useful features that can differentiate pixels from cloudy ones, and the models were tested on the remaining single image. Validity of each model was assessed via three-fold cross validation technique and the area under the Receiver Operation Curves (ROC). \\
 
 Among four probability prediction models -- logistic regression, linear discriminant analysis, fisher discriminant analysis, and random forest -- random forest provided the most accurate result. Misclassification analysis lead us to identify certain subspaces and feature values that are more likely to be misclassfied than others, such as rough ice regions that were incorrectly classified as clouds. Performance of the model is likely to depend on how similar the test image is to Images 1, 2, and 3, in terms of feature combinations. 
+
 \section{References}
 
-(1)  Shi, Tao, et al. "Daytime arctic cloud detection based on multi-angle satellite data with case studies." Journal of the American Statistical Association 103.482 (2008): 584-593.
+(1)  Shi, Tao, et al. "Daytime arctic cloud detection based on multi-angle satellite data with case studies." Journal of the American Statistical Association 103.482 (2008): 584-593.\\
 (2) Random Forest Interactive Discussion with Example. \url{https://www.youtube.com/watch?v=ajTc5y3OqSQ}
 
 \end{document}

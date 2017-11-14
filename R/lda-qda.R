@@ -122,9 +122,8 @@ qda.confustion <- function(Qimage1,Qimage2,Qimage3,method = "qda"){
     mutate(confusion = ifelse(label == -1,ifelse(posterior < thresh,"TN","FN"),ifelse(posterior >= thresh,"TP","FP")))
   
   #confusion plot information
-  ggconf <- list(geom_point(aes(x=x, y=y, group=confusion, colour=confusion)),
-                 scale_colour_manual(values = c("TP" = "white","FP" = "black","TN" = "#1eee2b","FN" = "#ff9428","Unknown" = "#777777")),
-                 theme(legend.position="right", aspect.ratio=1))
+  ggconf <- list(geom_point(aes(x=x, y=y, group=confusion, colour=confusion), alpha=0.1),
+                 scale_colour_manual(values = c("TP" = "gray70","FP" = "turquoise2","TN" = "lightgoldenrod1","FN" = "deeppink", "Unknown" = "#777777")), theme(legend.position="right", aspect.ratio=1), guides(color=guide_legend(override.aes=list(size = 2.5, alpha=0.5))))
   
   # theme to remove axis
   no_axis <- theme(axis.line=element_blank(),
@@ -136,13 +135,11 @@ qda.confustion <- function(Qimage1,Qimage2,Qimage3,method = "qda"){
   
   #get the confusion plots
   qda1.conf <- ggplot(Qimage1) + ggconf +
-    ggtitle("Image 1") + no_axis
-  
+    ggtitle("Image 1") + blank_theme + no_axis   
   qda2.conf <- ggplot(Qimage2) + ggconf +
-    ggtitle("Image 2") + no_axis
-  
+    ggtitle("Image 2") + blank_theme + no_axis
   qda3.conf <- ggplot(Qimage3) + ggconf +
-    ggtitle("Image 3") + no_axis
-  
+    ggtitle("Image 3") + blank_theme + no_axis  
+
   return(list(qda1.conf,qda2.conf,qda3.conf))
 }
