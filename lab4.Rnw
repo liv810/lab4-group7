@@ -11,6 +11,7 @@
 \usepackage{amsthm}
 \usepackage{amsmath}
 \usepackage{url}
+\usepackage{bm}
 
 \begin{document}
 
@@ -71,7 +72,7 @@ A cloud may obstruct the view of underlying ice from some angles but not others.
 This suggests that low CORR images often suggest clouds: however, low-altitude clouds or smooth cloud-free areas may break this trend, requiring the following two features.
 \item \textbf{SD - }\emph{standard deviation within groups of MISR}.\\
 SD helps identify smooth surfaces (areas with low standard deviations), as well as to identify a baseline for background measurement error that can be filtered out in the model.
-\item \textbf{NDAI - }\emph{a proxy for surface roughness, measured by thenormalized difference between measurements in the forward versus backward pointing cameras}.\\
+\item \textbf{NDAI - }\emph{a proxy for surface roughness, measured by the normalized difference between measurements in the forward versus backward pointing cameras}.\\
 The intuition is that a low-altitude cloud has more roughness than an ice- or snow-covered surface.  This feature combines with CORR to help differentiate between low CORR images that have low-altitude clouds versus are cloud-free.
 \end{itemize}
 \end{itemize}
@@ -239,20 +240,20 @@ We deduce from this confusion plot that the main problem with the QDA/LDA classi
 Logistic regression models the probability of the response taking a particular value based on the covariates. In this case, we model the probability of a pixel $Y_i$ being cloudy, given the three features: 
 
 $$
-\pi_i = P(Y_i = 1|X_i = x_i) = \frac{exp^(\beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3)}{1 + exp^(\beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3)}, 
+\pi_i = P(Y_i = 1|\bm{X_i = x_i}) = \frac{exp^(\beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3)}{1 + exp^(\beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3)}, 
 $$
 
 or 
 
 $$
-log(\frac{\pi_i}{1-\pi_i}) = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3, 
+log\big(\frac{\pi_i}{1-\pi_i}\big) = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \beta_3 x_3, 
 $$
 
 where $\beta_1, \beta_2, \beta_3$ correspond to the estimates of the coefficients for our three features.\\
 
-Logistic regression does not make some of the key assumptions made by linear regression. Specifically, it does not assume a linear relationship between the outcome and covariates, normality of covariates, or homoscedasticity. However, one assumption that is not satisfied in this dataset is the requirement that $Y_1, Y_2, ..., Y_n$ be independently distributed. Pixels have spatial correlation in that those that are close to each other are more likely to have the same binary outcome. \\ 
+Unlike in LDA or QDA, logistic regression does not make assumption on the normality of features. It also does not assume a linear relationship between the outcome and covariates or homoscedasticity. However, logistic regression does require that $Y_1, Y_2, ..., Y_n$ be independently distributed, which is not satisfied in this case; Pixels have spatial correlation in that those that are close to each other are more likely to have the same binary outcome. \\ 
 
-Our ROC plot shows that the classification accuracies for the three images vary from image to image.  The prediction made on image 2 has the highest accuracy rate, whereas predictions on images 1 and 3 have lower accuracy rates, as indicated by smaller AUC. Unlike the results obtained by LDA, QDA, and random forests, the prediction accuracy of image 3 is not substantially worse than predictions made on other images. 
+Partly for this reason, classification accuracy of logistic regression is lower than those of discriminant analysis and random forest (Figure 11). Also, unlike in DA and random forest, prediction on image 3 is not substantially worse than predictions on images 1 and 2. Logistic regression is less sensitive to outliers, and this may explain why prediction on image 3 is not the worst, even though it has different feature combinations from those of images 1 and 2. 
 
 <<fit-logistic-regression, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="ROC curve for logistic regression three-fold cross-validation.">>=
 
