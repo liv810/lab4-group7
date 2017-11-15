@@ -430,8 +430,10 @@ threshold <- 0.5
 
 # create a categorical variable that indicates whether a pixels is correctly classified or not correctly classified
 data$class <- NA
-data$class[data$predicted > threshold & data$true == 1] <- "correctly classified"
-data$class[data$predicted <= threshold & data$true == 0] <- "correctly classified"
+data$class[data$predicted >
+             threshold & data$true == 1] <- "correctly classified"
+data$class[data$predicted <=
+             threshold & data$true == 0] <- "correctly classified"
 data$class[data$predicted > threshold & data$true == 0] <- "false positive"
 data$class[data$predicted <= threshold & data$true == 1] <- "false negative"
 # convert the variable as factor
@@ -470,7 +472,8 @@ g2 <-
 g3 <- 
   ggplot() + 
   geom_point(data = data, aes(x = SD, y = CORR, color = class), alpha = 0.1) + 
-  scale_color_manual(name = "", values = c("gray70", "turquoise2", "deeppink")) +
+  scale_color_manual(name = "", values = c("gray70", "turquoise2",
+                                           "deeppink")) +
   theme_bw() + 
   theme(legend.position = "none", 
         panel.border = element_blank(), 
@@ -478,7 +481,8 @@ g3 <-
         axis.title.y = element_text(size = 9),
         axis.text=element_text(size = 9))
 
-grid_arrange_shared_legend(g1, g2, g3, ncol = 3, nrow = 1, position = "bottom")
+grid_arrange_shared_legend(g1, g2, g3, ncol = 3, nrow = 1,
+                           position = "bottom")
 
 @
 <<Confusion-Plot, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Plots showing correctly-classified and misclassified points using the random forest model.">>=
