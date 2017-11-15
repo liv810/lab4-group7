@@ -74,6 +74,9 @@ calculateROCValues <- function(predicted_and_true_labels_df,
 
 
 # Compute AUC # 
+# (this section is commented out because 
+# it takes a while to run and is not needed to compile Rnw)
+
 # preds <- pred.prob1
 # truth <- truth[[1]]
 # roc.jumps <-
