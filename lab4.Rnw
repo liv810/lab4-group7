@@ -218,7 +218,11 @@ $$
 
 Linear discriminant analysis (LDA) is nearly identical to QDA, except that it makes the further assumption that the covariance matrix is the same across all classes. We note from our exploratory analysis (e.g. Figure 6) that the assumption of Gaussian data within each class is reasonable, albeit not perfect.  We also note that 
 
-Figure 9 shows the ROC curves for the leave-one-image-out cross validation results from our LDA and QDA models.  Note that QDA performs slightly better than LDA in the first and second fold and worse in the third fold, where both QDA and LDA performed significantly worse than normal. This may suggest that image 1 and image 2 are similar, so training on one of them helps predict the classes for the other, but that image 3 might have feature combinations that are significantly different from those found in image 1 and image 2.
+Figure 9 shows the ROC curves for the leave-one-image-out cross validation results from our LDA and QDA models.  Note that QDA performs slightly better than LDA in the first and second fold and worse in the third fold, where both QDA and LDA performed significantly worse than normal. This may suggest that image 1 and image 2 are similar, 
+
+so training on one of them helps predict the classes for the other, 
+
+but that image 3 might have feature combinations that are significantly different from those found in image 1 and image 2.
 
 <<fit-qda-3, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Plots showing correctly-classified and misclassified points using the LDA model.">>=
 
