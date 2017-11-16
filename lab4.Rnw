@@ -491,16 +491,16 @@ grid_arrange_shared_legend(g1, g2, g3, ncol = 3, nrow = 1,
 <<Confusion-Plot, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Plots showing correctly-classified and misclassified points using the random forest model.">>=
 #Get the confusion plots
 data1 = data1 %>% mutate(confusion = ifelse(label == -1,
-   ifelse(predicted< threshold, "TN","FN"),
-   ifelse(predicted >= threshold, "TP", "FP")))
+   ifelse(predicted< threshold, "TN","FP"),
+   ifelse(predicted >= threshold, "TP", "FN")))
          
 data2 = data2 %>% mutate(confusion = ifelse(label == -1,
-  ifelse(predicted< threshold, "TN", "FN"),
-  ifelse(predicted >= threshold, "TP", "FP")))
+  ifelse(predicted< threshold, "TN", "FP"),
+  ifelse(predicted >= threshold, "TP", "FN")))
 
 data3 = data3 %>% mutate(confusion = ifelse(label == -1, ifelse(
-  predicted< threshold, "TN", "FN"),
-  ifelse(predicted >= threshold, "TP", "FP")))
+  predicted< threshold, "TN", "FP"),
+  ifelse(predicted >= threshold, "TP", "FN")))
 
 ggconf <- list(geom_point(aes(x = x, y = y,
                               group = confusion,
