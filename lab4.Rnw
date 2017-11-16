@@ -420,7 +420,7 @@ NDAI, which differs substantially between cloud and clear pixels, is the most in
 
 Pixels are rarely misclassified at small values of NDAI, or at large values of CORR.
 
-<<misclassification_plot, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Patterns in misclassification errors by different feature values. Grey points denote pixels that are correctly classified, blue denotes clear pixels  incorrectly classified as cloud, and pink denotes cloudy pixels incorrectly classified as clear.">>=
+<<misclassification_plot, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Patterns in misclassification errors by different feature values. Grey points denote pixels that are correctly classified, red denotes clear pixels  incorrectly classified as cloud, and blue denotes cloudy pixels incorrectly classified as clear.">>=
 
 # for each image, create data that has both predicted and actual labels
 data1 <- cbind(prediction1, image1_filtered)
@@ -448,7 +448,7 @@ data$class <- factor(data$class,
 g1 <- 
   ggplot() + 
   geom_point(data = data, aes(x = NDAI, y = SD, color = class), alpha = 0.1) + 
-  scale_color_manual(values = c("gray70", "turquoise2", "deeppink")) +
+  scale_color_manual(values = c("gray70", "deeppink", "turquoise2")) +
   guides(colour = guide_legend(override.aes = list(alpha = 1))) + 
   theme_bw() + 
   theme(legend.position = "none", 
@@ -463,7 +463,7 @@ g2 <-
   geom_point(data = data, aes(x = NDAI, y = CORR,
                               color = class), alpha = 0.1) + 
   scale_color_manual(name = "",
-                     values = c("gray70", "turquoise2", "deeppink")) +
+                     values = c("gray70", "deeppink", "turquoise2")) +
   theme_bw() + 
   theme(legend.position = "none", 
         panel.border = element_blank(), 
@@ -475,8 +475,8 @@ g2 <-
 g3 <- 
   ggplot() + 
   geom_point(data = data, aes(x = SD, y = CORR, color = class), alpha = 0.1) + 
-  scale_color_manual(name = "", values = c("gray70", "turquoise2",
-                                           "deeppink")) +
+  scale_color_manual(name = "", values = c("gray70", "deeppink",
+                                           "turquoise2")) +
   theme_bw() + 
   theme(legend.position = "none", 
         panel.border = element_blank(), 
