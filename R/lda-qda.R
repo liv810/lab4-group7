@@ -147,20 +147,20 @@ qda.confustion <- function(labeled_image1, labeled_image2, labeled_image3,
   labeled_image1 = labeled_image1 %>% mutate(posterior =
                                                qda1.pred$posterior[, 2]) %>% 
     mutate(confusion = ifelse(label == -1, ifelse(posterior < thresh,
-                                                  "TN", "FN"),
-                              ifelse(posterior >= thresh,"TP","FP")))
+                                                  "TN", "FP"),
+                              ifelse(posterior >= thresh,"TP","FN")))
   
   labeled_image2 = labeled_image2 %>% mutate(posterior =
                                                qda2.pred$posterior[, 2]) %>% 
     mutate(confusion = ifelse(label == -1, ifelse(posterior < thresh,
-                                                 "TN", "FN"),
-                              ifelse(posterior >= thresh, "TP", "FP")))
+                                                 "TN", "FP"),
+                              ifelse(posterior >= thresh, "TP", "FN")))
   
   labeled_image3 = labeled_image3 %>% mutate(posterior =
                                                qda3.pred$posterior[, 2]) %>% 
     mutate(confusion = ifelse(label == -1, ifelse(posterior < thresh,
-                                                  "TN", "FN"), 
-                              ifelse(posterior >= thresh, "TP", "FP")))
+                                                  "TN", "FP"), 
+                              ifelse(posterior >= thresh, "TP", "FN")))
   
   #confusion plot information
   ggconf <- list(geom_point(aes(x = x, y = y, group = confusion,
