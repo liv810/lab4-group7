@@ -129,7 +129,7 @@ qda.confustion <- function(labeled_image1,labeled_image2,labeled_image3,method =
   
   #confusion plot information
   ggconf <- list(geom_point(aes(x=x, y=y, group=confusion, colour=confusion), alpha=0.1),
-                 scale_colour_manual(values = c("TP" = "gray70","FP" = "turquoise2","TN" = "lightgoldenrod1","FN" = "deeppink", "Unknown" = "#777777")), 
+                 scale_colour_manual(values = c("TP" = "gray70","FN" = "turquoise2","TN" = "lightgoldenrod1","FP" = "deeppink", "Unknown" = "#777777")), 
                  theme(legend.position="right", aspect.ratio=1), guides(color=guide_legend(override.aes=list(size = 2.5, alpha=0.5))))
   
   # theme to remove axis
