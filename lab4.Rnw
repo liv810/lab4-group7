@@ -95,7 +95,8 @@ grid_arrange_shared_legend(plotRawImage(image1, "AN") +
 
 # Expert-labelled images
 grid_arrange_shared_legend(plotClasses(image1) +
-                             ggtitle("Expert-labelled satellite data of snow/ice"),
+                           ggtitle("Expert-labelled satellite data
+                                   of snow/ice"),
                            plotClasses(image2) + ggtitle(""),
                            plotClasses(image3) + ggtitle(""),
                            ncol=3, nrow=1, position="right")
@@ -516,13 +517,16 @@ ggconf <- list(geom_point(aes(x=x, y=y,
 
 # Plot the three images
 rf1.conf <- ggplot(data1) + ggconf +
-  ggtitle("Image 1") + blank_theme + no_axis + theme(axis.title.x = element_blank())
+  ggtitle("Image 1") + blank_theme + no_axis +
+  theme(axis.title.x = element_blank())
 
 rf2.conf <- ggplot(data2) + ggconf +
-  ggtitle("Image 2") + blank_theme + no_axis + theme(axis.title.x = element_blank())
+  ggtitle("Image 2") + blank_theme + no_axis +
+  theme(axis.title.x = element_blank())
 
 rf3.conf <- ggplot(data3) + ggconf + 
-  ggtitle("Image 3") + blank_theme + no_axis + theme(axis.title.x = element_blank())
+  ggtitle("Image 3") + blank_theme + no_axis +
+  theme(axis.title.x = element_blank())
 
 grid_arrange_shared_legend(rf1.conf, rf2.conf, rf3.conf,
                            ncol = 3 ,nrow = 1,
