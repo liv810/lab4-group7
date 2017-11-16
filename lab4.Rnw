@@ -27,7 +27,7 @@ In 1999, NASA's Multiangle Imaging SpectroRadiometer (MISR) data generated a mas
 
 One of the biggest statistical challenges of this dataset is to conclude, for each image, which regions are ice-covered, as opposed to snow-covered or simply unknown.  Using only a small subset (three images) of this data, each of which produced radiances from 5 different angles, we use expert labels in order to train and evaluate classification models that can help differentiate between icy versus cloudy surfaces.
 
-<<setup, echo = FALSE, message=FALSE, warning=FALSE, fig.height = 5, fig.width = 5, fig.align='center', fig.pos='h', fig.cap="Histogram of the correlation similarity measure for different values of k">>=
+<<setup, echo = FALSE, message=FALSE, warning = FALSE, fig.height = 5, fig.width = 5, fig.align = 'center', fig.pos = 'h', fig.cap = "Histogram of the correlation similarity measure for different values of k">>=
 
 library(tidyverse)
 library(gridExtra)
@@ -41,7 +41,8 @@ image2 <- read.table(paste0('data/', 'image2.txt'), header = F)
 image3 <- read.table(paste0('data/', 'image3.txt'), header = F)
 
 # Add informative column names.
-collabs <- c('y','x','label','NDAI','SD','CORR','DF','CF','BF','AF','AN')
+collabs <- c('y', 'x', 'label', 'NDAI', 'SD', 'CORR', 'DF', 'CF', 
+             'BF', 'AF', 'AN')
 names(image1) <- collabs
 names(image2) <- collabs
 names(image3) <- collabs
@@ -81,14 +82,14 @@ The intuition is that a low-altitude cloud has more roughness than an ice- or sn
 
 The following plots visualize the three provided images.  The first set of images shows the raw data from the perspective of the AN-camera.  The second set of images shows the same three images, classified by whether an expert determined that a given area was ice (pink), unknown (green), or cloudy (blue).
 
-<<plot-raw-data, cached=TRUE, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Raw (from AN-camera) image data for the three provided images.">>=
+<<plot-raw-data, cached = TRUE, echo = FALSE, message = FALSE, warning = FALSE, dev = 'png', dpi = 300, fig.height = 2, fig.width = 6, fig.align = 'center', fig.pos = 'h', fig.cap = "Raw (from AN-camera) image data for the three provided images.">>=
 
 # Raw images
 grid_arrange_shared_legend(plotRawImage(image1, "AN") +
     ggtitle("Raw satellite data of snow/ice,from AN-camera"),
     plotRawImage(image2, "AN") + ggtitle(""),
     plotRawImage(image3, "AN") + ggtitle(""),
-    ncol=3, nrow=1, position="right")
+    ncol = 3, nrow = 1, position = "right")
 @
 
 <<plot-expert-labelled-data, cached=TRUE, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Expert-labelled image data for the three provided images.">>=
@@ -99,7 +100,7 @@ grid_arrange_shared_legend(plotClasses(image1) +
                                    of snow/ice"),
                            plotClasses(image2) + ggtitle(""),
                            plotClasses(image3) + ggtitle(""),
-                           ncol=3, nrow=1, position="right")
+                           ncol = 3, nrow = 1, position = "right")
 @
 
 \subsection{Do different angles provide different information?}
@@ -116,7 +117,7 @@ grid_arrange_shared_legend(plotRawImage(image1, "DF") +
     plotRawImage(image1, "BF") + no_axis + ggtitle(""),
     plotRawImage(image1, "AF") + no_axis + ggtitle(""),
     plotRawImage(image1, "AN") + no_axis + ggtitle(""),
-    ncol=5, nrow=1, position="right")
+    ncol = 5, nrow = 1, position = "right")
 @
 
 Plotting the conditional densities of cloud- versus ice-covered regions confirms that different angles do indeed help differentiate between cloud and ice.  We notice two trends in particular.  First, icy regions tend to occur at a resolution of around 275.  This can effectively set a high ``prior" for iciness for pixels with a similar resolution.  Second, we notice that cloudy regions have a much wider range of resolutions that change with the angle of measurement.  Again, this confirms Shi et. al.'s intuition that differences between measurements from different angles often correspond to cloudiness.
@@ -130,7 +131,7 @@ grid_arrange_shared_legend(plot_conditional_densities(image1, "DF") +
     plot_conditional_densities(image1, "BF") + no_axis + ggtitle(""),
     plot_conditional_densities(image1, "AF") + no_axis + ggtitle(""),
     plot_conditional_densities(image1, "AN") + no_axis + ggtitle(""),
-    ncol=5, nrow=1, position="right")
+    ncol = 5, nrow = 1, position = "right")
 
 @
 
@@ -151,7 +152,7 @@ grid_arrange_shared_legend(plot_conditional_densities(image1, "NDAI") +
     ggtitle("Image 1 NDAI"),
     plot_conditional_densities(image1, "CORR") + ggtitle("Image 1 CORR"),
     plot_conditional_densities(image1, "SD") + ggtitle("Image 1 SD"),
-    ncol=3, nrow=1, position="right")
+    ncol = 3, nrow = 1, position = "right")
 @
 
 The discriminatory power of NDAI can also be seen from the following side-by-side plot of NDAI resolution values versus the true classes of image 1.  Note that higher values of NDAI tend to correspond to ``no ice" regions.
@@ -159,7 +160,7 @@ The discriminatory power of NDAI can also be seen from the following side-by-sid
 <<plot-ndai-values, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="High NDAI values tend to correspond to unknown or cloudy regions; low NDAI values tend to correspond to icy regions.">>=
 
 grid.arrange(plotRawImage(image1, "NDAI") + ggtitle("Image 1 NDAI"),
-    plotClasses(image1) + ggtitle("True classes"), ncol=2, nrow=1)
+    plotClasses(image1) + ggtitle("True classes"), ncol = 2, nrow = 1)
 
 @
 
@@ -206,7 +207,7 @@ Qimage2 = mutate(image2, Image = 2) %>% filter(label != 0)
 Qimage3 = mutate(image3, Image = 3) %>% filter(label != 0)
 
 #the plotting information for ROC curves.
-plot.info <- qda.lda.info(Qimage1,Qimage2,Qimage3)
+plot.info <- qda.lda.info(Qimage1, Qimage2, Qimage3)
 
 grid_arrange_shared_legend(plot.info[[2]], plot.info[[1]],
                            ncol =2, nrow = 1, position = "right")
@@ -224,10 +225,10 @@ so training on one of them helps predict the classes for the other, but that ima
 
 <<fit-qda-3, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Plots showing correctly-classified and misclassified points using the LDA model.">>=
 
-conf.info <- qda.confustion(Qimage1,Qimage2,Qimage3)
+conf.info <- qda.confustion(Qimage1, Qimage2, Qimage3)
 
-grid_arrange_shared_legend(conf.info[[1]],conf.info[[2]],conf.info[[3]],
-                           ncol = 3 ,nrow = 1, position = "right")
+grid_arrange_shared_legend(conf.info[[1]], conf.info[[2]], conf.info[[3]],
+                           ncol = 3, nrow = 1, position = "right")
 @
 
 Figure 10 shows the confusion plot after selecting a cloud-vs.-ice threshold of 0.21, which was determined by averaging the thresholds in the three-fold validation to make the point $(TRR, FPR)$ furthest away from the line $y = x$.
@@ -288,7 +289,7 @@ ggplot(fpr_tpr_rates_df) +
         plot.title = element_text(size = 9),
         axis.title.x = element_text(size = 9),
         axis.title.y = element_text(size = 9),
-        axis.text=element_text(size = 9))
+        axis.text = element_text(size = 9))
 
 @
 
@@ -350,7 +351,7 @@ ggplot(fpr_tpr_rates_df) +
         plot.title = element_text(size = 9),
         axis.title.x = element_text(size = 9),
         axis.title.y = element_text(size = 9),
-        axis.text=element_text(size = 9))
+        axis.text = element_text(size = 9))
 
 @
 
@@ -454,7 +455,7 @@ g1 <-
         panel.border = element_blank(), 
         axis.title.x = element_text(size = 9),
         axis.title.y = element_text(size = 9),
-        axis.text=element_text(size = 9))
+        axis.text = element_text(size = 9))
 
 # plot NDAI vs CORR 
 g2 <- 
@@ -468,7 +469,7 @@ g2 <-
         panel.border = element_blank(), 
         axis.title.x = element_text(size = 9),
         axis.title.y = element_text(size = 9),
-        axis.text=element_text(size = 9))
+        axis.text = element_text(size = 9))
 
 # plot SD vs CORR 
 g3 <- 
@@ -481,7 +482,7 @@ g3 <-
         panel.border = element_blank(), 
         axis.title.x = element_text(size = 9),
         axis.title.y = element_text(size = 9),
-        axis.text=element_text(size = 9))
+        axis.text = element_text(size = 9))
 
 grid_arrange_shared_legend(g1, g2, g3, ncol = 3, nrow = 1,
                            position = "bottom")
@@ -490,28 +491,28 @@ grid_arrange_shared_legend(g1, g2, g3, ncol = 3, nrow = 1,
 <<Confusion-Plot, echo = FALSE, message=FALSE, warning=FALSE, dev='png', dpi=300, fig.height = 2.5, fig.width = 6, fig.align='center', fig.pos='h', fig.cap="Plots showing correctly-classified and misclassified points using the random forest model.">>=
 #Get the confusion plots
 data1 = data1 %>% mutate(confusion = ifelse(label == -1,
-   ifelse(predicted< threshold,"TN","FN"),
-   ifelse(predicted >= threshold,"TP","FP")))
+   ifelse(predicted< threshold, "TN","FN"),
+   ifelse(predicted >= threshold, "TP", "FP")))
          
 data2 = data2 %>% mutate(confusion = ifelse(label == -1,
-  ifelse(predicted< threshold,"TN","FN"),
-  ifelse(predicted >= threshold,"TP","FP")))
+  ifelse(predicted< threshold, "TN", "FN"),
+  ifelse(predicted >= threshold, "TP", "FP")))
 
-data3 = data3 %>% mutate(confusion = ifelse(label == -1,ifelse(
-  predicted< threshold,"TN","FN"),
-  ifelse(predicted >= threshold,"TP","FP")))
+data3 = data3 %>% mutate(confusion = ifelse(label == -1, ifelse(
+  predicted< threshold, "TN", "FN"),
+  ifelse(predicted >= threshold, "TP", "FP")))
 
-ggconf <- list(geom_point(aes(x=x, y=y,
-                              group=confusion,
-                              colour=confusion), alpha=0.1),
+ggconf <- list(geom_point(aes(x = x, y = y,
+                              group = confusion,
+                              colour = confusion), alpha = 0.1),
                  scale_colour_manual(values = c("TP" = "gray70",
                                                 "FN" = "turquoise2",
                                                 "TN" = "lightgoldenrod1",
                                                 "FP" = "deeppink",
                                                 "Unknown" = "#777777")),
-               theme(legend.position="right", aspect.ratio=1),
-               guides(color=guide_legend(override.aes=
-                                           list(size = 2.5, alpha=0.5))),
+               theme(legend.position = "right", aspect.ratio = 1),
+               guides(color = guide_legend(override.aes =
+                                           list(size = 2.5, alpha = 0.5))),
                theme_bw(), no_axis)
   
 
@@ -529,7 +530,7 @@ rf3.conf <- ggplot(data3) + ggconf +
   theme(axis.title.x = element_blank())
 
 grid_arrange_shared_legend(rf1.conf, rf2.conf, rf3.conf,
-                           ncol = 3 ,nrow = 1,
+                           ncol = 3, nrow = 1,
                            position = "right")
 
 @

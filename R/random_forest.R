@@ -3,9 +3,9 @@ library(ROCR)
 source("R/classify.R")
 
 # filter to only the labelled data (don't train on unknown labels)
-image1_filtered <-  image1 %>% filter(label != 0)
-image2_filtered <-  image2 %>% filter(label != 0)
-image3_filtered <-  image3 %>% filter(label != 0)
+image1_filtered <- image1 %>% filter(label != 0)
+image2_filtered <- image2 %>% filter(label != 0)
+image3_filtered <- image3 %>% filter(label != 0)
 
 # create testing and training data
 train_data_12 <- rbind(image1_filtered, image2_filtered)
@@ -33,7 +33,7 @@ trainAndEvaluateRF <- function(train_data, test_data, ntree){
   test_labels[test_labels == -1] <- 0
 
   # create a dataframe with the predicted versus true labels
-  predicted_and_true_labels_df <- cbind(test_pred[,2], test_labels)
+  predicted_and_true_labels_df <- cbind(test_pred[, 2], test_labels)
   colnames(predicted_and_true_labels_df) <- c("predicted", "true")
   
   return(predicted_and_true_labels_df)
@@ -50,8 +50,8 @@ calculateROCValues <- function(predicted_and_true_labels_df,
   # Returns: tpr and fpr rates for random Forest
   
   # evaluate the performance of the predictions
-  pred = prediction(predicted_and_true_labels_df[,1],
-                    predicted_and_true_labels_df[,2])
+  pred = prediction(predicted_and_true_labels_df[, 1],
+                    predicted_and_true_labels_df[, 2])
   perf = performance(pred, "tpr", "fpr")
   
   # return a dataframe with true positive and false positive rates,
@@ -91,7 +91,7 @@ parameterTuneRF <- function(ntree, maxnodes, mtry) {
         test_pred <- predict(rf_model, type = "prob",
                              newdata = image3_filtered)
         
-        pred = prediction(test_pred[,2], test_labels)
+        pred = prediction(test_pred[, 2], test_labels)
         perf = performance(pred, "auc")
         
         # append the new parameter values and AUC onto the vector
@@ -123,7 +123,7 @@ plotParameterTuning <- function(parameter) {
   # first, find the mean AUC per parameter value
   ggimage <- ggplot(parameter_tuning %>%
                     group_by(param = parameter_tuning[,parameter]) %>%
-                    summarize(mean=mean(AUC)),
+                    summarize(mean = mean(AUC)),
                     aes(x = param, y = mean)) +
     # add points and lines between the points
     geom_point() +

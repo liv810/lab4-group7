@@ -9,11 +9,11 @@ blank_theme <- theme_bw() +
         plot.title = element_text(size = 8))
 
 # theme to remove axis
-no_axis <- theme(axis.line=element_blank(),
-                 axis.text.x=element_blank(),
-                 axis.text.y=element_blank(),
-                 axis.ticks=element_blank(),
-                 axis.title.y=element_blank())
+no_axis <- theme(axis.line = element_blank(),
+                 axis.text.x = element_blank(),
+                 axis.text.y = element_blank(),
+                 axis.ticks = element_blank(),
+                 axis.title.y = element_blank())
 
 plotRawImage <- function(image_df, angle){
   # Plots the raw images, given the AN-camera angle.
@@ -38,11 +38,11 @@ plotClasses <- function(image_df) {
   # Create plot object
   gg_image <- ggplot(image_df) +
               geom_point(aes(x = x, y = y, color = factor(label)),
-                         alpha=0.1) +
+                         alpha = 0.1) +
               scale_color_discrete(name = "Expert label",
                                    labels = c("Ice", "Unknown", "Cloud"),
                                    guide = guide_legend(override.aes = 
-                                                  list(alpha=0.8))) +
+                                                  list(alpha = 0.8))) +
               blank_theme + no_axis + xlab("")
   
   return(gg_image)
@@ -81,8 +81,8 @@ plot_feature_vs_feature <- function(feature1, feature2) {
   
   # plot some combined data to confirm the relationship across images
   gg_image <- ggplot(combined_data[sample(nrow(combined_data), 1000),],
-                     aes(color=factor(label))) +
-    geom_point(aes_string(x=feature1, y=feature2), alpha=0.5) +
+                     aes(color = factor(label))) +
+    geom_point(aes_string(x = feature1, y = feature2), alpha=0.5) +
     # add legend descriptions
     scale_color_discrete(name = "Expert label",
                          labels = c("Ice", "Unknown", "Cloud")) +

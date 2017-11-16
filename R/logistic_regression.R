@@ -43,7 +43,7 @@ trainAndEvaluateLR <- function(train_data, test_data){
   test_labels[test_labels == -1] <- 0
   
   # create a dataframe with the predicted versus true labels
-  predicted_and_true_labels_df <- cbind(test_pred[,2], test_labels)
+  predicted_and_true_labels_df <- cbind(test_pred[, 2], test_labels)
   colnames(predicted_and_true_labels_df) <- c("predicted", "true")
   
   return(predicted_and_true_labels_df)
@@ -61,8 +61,8 @@ calculateROCValues <- function(predicted_and_true_labels_df,
   # Returns: tpr and fpr rates for random Forest
   
   # evaluate the performance of the predictions
-  pred = prediction(predicted_and_true_labels_df[,1],
-                    predicted_and_true_labels_df[,2])
+  pred = prediction(predicted_and_true_labels_df[, 1],
+                    predicted_and_true_labels_df[, 2])
   perf = performance(pred, "tpr", "fpr")
   
   # return a dataframe with true positive and false positive rates,
@@ -86,11 +86,3 @@ calculateROCValues <- function(predicted_and_true_labels_df,
 #          })
 # # calculate the average of these false positive rates
 # auc <- sum(roc.jumps) / sum(truth ==0)
-
-
-
-
-
-
-
-

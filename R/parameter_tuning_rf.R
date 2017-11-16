@@ -10,4 +10,4 @@ parameter_tuning <- data.frame(sapply(parameter_tuning,
 
 grid.arrange(plotParameterTuning("ntree"),
              plotParameterTuning("maxnodes"),
-             plotParameterTuning("mtry"), ncol=3, nrow=1)
+             plotParameterTuning("mtry"), ncol = 3, nrow = 1)
